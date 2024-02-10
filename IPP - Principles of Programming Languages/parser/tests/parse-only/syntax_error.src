@@ -1,0 +1,6 @@
+# Ukazka kódu se syntaktickou chybou (skript parse.php musí detekovat)
+
+.IPPcode23
+LABEL begin
+DEFVAR GF@x
+WRITE begin  # neočekávaný token
