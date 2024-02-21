@@ -7,7 +7,7 @@
 
 POSIXLY_CORRECT=yes
 
-MERGED_CONTENT=""
+FILE_CONTENT=""
 has_a=0
 has_b=0
 has_list=0
@@ -56,22 +56,22 @@ while [ "$#" -gt 0 ]; do
     -a)
         if echo "$2" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$'; then
             DATETIME_A="$2"
+            has_a=1
+            shift
         else
             printf "Chyba: -a potřebuje argument ve formátu YYYY-MM-DD HH:MM:SS\n" >&2
             exit 1
         fi
-        has_a=1
-        shift
         ;;
     -b)
         if echo "$2" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$'; then
             DATETIME_B="$2"
+            has_b=1
+            shift
         else
             printf "Chyba: -b potřebuje argument ve formátu YYYY-MM-DD HH:MM:SS\n" >&2
             exit 1
         fi
-        has_b=1
-        shift
         ;;
     -c)
         if [ -z "$2" ]; then
@@ -79,54 +79,54 @@ while [ "$#" -gt 0 ]; do
             exit 1
         else
             CURRENCY="$2"
+            shift
         fi
-        shift
         ;;
     list)
-        if [ -z "$2" ]; then
+        if [ -z "$2" ] && [ "$USER" = "" ]; then
             printf "Chyba: list potřebuje argument USER" >&2
             exit 1
-        else
+        elif [ "$USER" = "" ]; then
             USER="$2"
-            has_list=1
+            shift
         fi
-        shift
+        has_list=1
         ;;
     list-currency)
-        if [ -z "$2" ]; then
+        if [ -z "$2" ] && [ "$USER" = "" ]; then
             printf "Chyba: list-currency potřebuje argument USER" >&2
             exit 1
-        else
+        elif [ "$USER" = "" ]; then
             USER="$2"
-            has_list_currency=1
+            shift
         fi
-        shift
+        has_list_currency=1
         ;;
     status)
-        if [ -z "$2" ]; then
+        if [ -z "$2" ] && [ "$USER" = "" ]; then
             printf "Chyba: status potřebuje argument USER" >&2
             exit 1
-        else
+        elif [ "$USER" = "" ]; then
             USER="$2"
-            has_status=1
+            shift
         fi
-        shift
+        has_status=1
         ;;
     profit)
-        if [ -z "$2" ]; then
+        if [ -z "$2" ] && [ "$USER" = "" ]; then
             printf "Chyba: profit potřebuje argument USER" >&2
             exit 1
-        else
+        elif [ "$USER" = "" ]; then
             USER="$2"
-            has_profit=1
+            shift
         fi
-        shift
+        has_profit=1
         ;;
     *.log)
-        MERGED_CONTENT="$MERGED_CONTENT\n$(cat "$1")"
+        FILE_CONTENT="$FILE_CONTENT\n$(cat "$1")"
         ;;
     *.gz)
-        MERGED_CONTENT="$MERGED_CONTENT\n$(zcat "$1")"
+        FILE_CONTENT="$FILE_CONTENT\n$(zcat "$1")"
         ;;
     *)
         if [ "$USER" = "" ] && [ "$has_list" -eq 0 ]; then
@@ -195,21 +195,20 @@ filter_by_currency() {
     awk -F';' -v currency="$CURRENCY" '$3 == currency || currency == ""'
 }
 
-
 #--------------------------USE COMMANDS---------------------------#
 
-if [ "$has_list" -eq 1 ]; then
-    filtered_content=$(filter_by_datetime "$MERGED_CONTENT" | filter_by_currency)
+if [ "$has_list" -eq 1 ] && [ "$has_list_currency" != 1 ] && [ "$has_status" != 1  ] && [ "$has_profit" != 1  ]; then
+    filtered_content=$(filter_by_datetime "$FILE_CONTENT" | filter_by_currency)
     printf "%b" "$filtered_content" | awk -F';' -v user="$USER" '$1 == user'
 fi
 
 if [ "$has_list_currency" -eq 1 ]; then
-    filtered_content=$(filter_by_datetime "$MERGED_CONTENT" | filter_by_currency)
+    filtered_content=$(filter_by_datetime "$FILE_CONTENT" | filter_by_currency)
     printf "%b" "$filtered_content" | awk -F';' -v user="$USER" '$1 == user' | awk -F';' '{print $3}' | sort | uniq
 fi
 
 if [ "$has_status" -eq 1 ]; then
-    filtered_content=$(filter_by_datetime "$MERGED_CONTENT" | filter_by_currency)
+    filtered_content=$(filter_by_datetime "$FILE_CONTENT" | filter_by_currency)
     printf "%b" "$filtered_content" | awk -F';' -v user="$USER" '$1 == user' | awk -F';' '{
         CURR[$3]+=$4
     } END {
@@ -219,7 +218,7 @@ if [ "$has_status" -eq 1 ]; then
 fi
 
 if [ "$has_profit" -eq 1 ]; then
-    filtered_content=$(filter_by_datetime "$MERGED_CONTENT" | filter_by_currency)
+    filtered_content=$(filter_by_datetime "$FILE_CONTENT" | filter_by_currency)
     printf "%b" "$filtered_content" | awk -F';' -v user="$USER" '$1 == user' | awk -F';' -v profit="$XTF_PROFIT" '{
         CURR[$3]+=$4
     } END {
