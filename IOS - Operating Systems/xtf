@@ -122,14 +122,13 @@ while [ "$#" -gt 0 ]; do
         fi
         has_profit=1
         ;;
-    *.log)
-        FILE_CONTENT="$FILE_CONTENT\n$(cat "$1")"
-        ;;
     *.gz)
         FILE_CONTENT="$FILE_CONTENT\n$(zcat "$1")"
         ;;
     *)
-        if [ "$USER" = "" ] && [ "$has_list" -eq 0 ]; then
+        if [ -f "$1" ]; then
+            FILE_CONTENT="$FILE_CONTENT\n$(cat "$1")"
+        elif [ "$USER" = "" ] && [ "$has_list" -eq 0 ]; then
             has_list=1
             USER="$1"
         elif [ "$USER" != "" ]; then
