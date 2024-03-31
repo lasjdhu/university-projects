@@ -12,7 +12,7 @@ entity UART_RX_FSM is
        CLK       : in std_logic;
        RST       : in std_logic;
        DIN       : in std_logic;
-       CNT_CYCLE : in std_logic_vector(3 downto 0);
+       CNT_CYCLE : in std_logic_vector(4 downto 0);
        CNT_BIT   : in std_logic_vector(3 downto 0);
        CYCLE_EN  : out std_logic;
        BIT_EN    : out std_logic;
@@ -27,6 +27,8 @@ architecture behavioral of UART_RX_FSM is
     type t_state is (IDLE, WAIT_FIRST, READ_DATA, STOP_READ);
     signal pstate : t_state;
     signal nstate : t_state;
+    type generator_state is (IDLE, WAIT_FIRST, READ_DATA, STOP_READ);
+    signal current_state : generator_state := IDLE;
 
 begin
 
@@ -48,16 +50,22 @@ begin
         nstate <= pstate;
         case pstate is
             when IDLE =>
-                nstate <= WAIT_FIRST;
+                current_state <= IDLE;
+                if DIN = '0' then
+                    nstate <= WAIT_FIRST;
+                end if;
             when WAIT_FIRST =>
-                if CNT_CYCLE = "1000" and DIN = '0' then
+                current_state <= WAIT_FIRST;
+                if CNT_CYCLE = "00111" then
                     nstate <= READ_DATA;
                 end if;
             when READ_DATA =>
-                if CNT_BIT = "1001" then
+                current_state <= READ_DATA;
+                if CNT_BIT = "1000" and CNT_CYCLE = "01111" then
                     nstate <= STOP_READ;
                 end if;
             when STOP_READ =>
+                current_state <= STOP_READ;
                 if DIN = '1' then
                     nstate <= IDLE;
                 end if;
