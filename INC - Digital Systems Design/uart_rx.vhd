@@ -23,10 +23,10 @@ end entity;
 -- Architecture implementation (INSERT YOUR IMPLEMENTATION HERE)
 architecture behavioral of UART_RX is
 
-    signal CNT_CYCLE : std_logic_vector(3 downto 0);
-    signal CNT_BIT   : std_logic_vector(3 downto 0);
-    signal CYCLE_EN  : std_logic;
-    signal BIT_EN    : std_logic;
+    signal CNT_CYCLE : std_logic_vector(4 downto 0) := (others => '0');
+    signal CNT_BIT : std_logic_vector(3 downto 0) := (others => '0');
+    signal CYCLE_EN  : std_logic := '0';
+    signal BIT_EN    : std_logic := '0';
 
 begin
 
@@ -47,7 +47,7 @@ begin
     begin
         if rising_edge(CLK) then
             if CYCLE_EN = '1' then
-                if BIT_EN = '0' and CNT_CYCLE = "1000" then
+                if (BIT_EN = '0' and CNT_CYCLE = "00111") or (BIT_EN = '1' and CNT_CYCLE = "01111") then
                     CNT_CYCLE <= (others => '0');
                 else
                     CNT_CYCLE <= CNT_CYCLE + 1;
@@ -62,7 +62,7 @@ begin
     begin
         if rising_edge(CLK) then
             if BIT_EN  = '1' then
-                if CNT_CYCLE = "1111" then
+                if CNT_CYCLE = "01111" then
                     CNT_BIT <= CNT_BIT + 1;
                 end if;
             else
@@ -74,17 +74,23 @@ begin
     p_demux_reg: process(CLK)
     begin
         if rising_edge(CLK) then
-            case CNT_BIT is
-                when "0000" => DOUT(0) <= DIN;
-                when "0001" => DOUT(1) <= DIN;
-                when "0010" => DOUT(2) <= DIN;
-                when "0011" => DOUT(3) <= DIN;
-                when "0100" => DOUT(4) <= DIN;
-                when "0101" => DOUT(5) <= DIN;
-                when "0110" => DOUT(6) <= DIN;
-                when "0111" => DOUT(7) <= DIN;
-                when others => null;
-            end case;
+            if DIN = '1' and CNT_CYCLE = "01111" then
+                case CNT_BIT is
+                    when "0000" => DOUT(0) <= DIN;
+                    when "0001" => DOUT(1) <= DIN;
+                    when "0010" => DOUT(2) <= DIN;
+                    when "0011" => DOUT(3) <= DIN;
+                    when "0100" => DOUT(4) <= DIN;
+                    when "0101" => DOUT(5) <= DIN;
+                    when "0110" => DOUT(6) <= DIN;
+                    when "0111" => DOUT(7) <= DIN;
+                    when others => null;
+                end case;
+            end if;
+
+            if BIT_EN = '0' then
+                DOUT <= (others => '0');
+            end if;
         end if;
     end process;
 
