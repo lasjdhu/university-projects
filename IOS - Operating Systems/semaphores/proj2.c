@@ -53,7 +53,6 @@ void skibusCycle() {
     fflush(f);
     sem_post(writing);
 
-    sem_wait(mutex);
     for (int i = 0; i < L; i++) {
       if (currStop == idZ[i] && idZ[i] != BOARDED && currBoarded < K) {
         currBoarded++;
@@ -61,7 +60,6 @@ void skibusCycle() {
         sem_wait(skierBoarded);
       }
     }
-    sem_post(mutex);
 
     sem_wait(writing);
     fprintf(f, "%d: BUS: leaving %d\n", (*c)++, currStop);
@@ -79,14 +77,12 @@ void skibusCycle() {
     fflush(f);
     sem_post(writing);
 
-    sem_wait(mutex);
     for (int i = 0; i < L; i++) {
-      if (idZ[i] == BOARDED && idZ[i] != UNBOARDED) {
-        sem_post(final);
+      if (idZ[i] == BOARDED) {
+        sem_post(&final[i]);
         sem_wait(skierUnboarded);
       }
     }
-    sem_post(mutex);
 
     sem_wait(writing);
     fprintf(f, "%d: BUS: leaving final\n", (*c)++);
@@ -135,22 +131,22 @@ void skierProcess(int idL) {
 
   sem_wait(&skibusArrived[idL]);
 
+  idZ[idL] = BOARDED;
   sem_wait(writing);
   fprintf(f, "%d: L %d: boarding\n", (*c)++, idL + 1);
   fflush(f);
   sem_post(writing);
 
-  idZ[idL] = BOARDED;
   sem_post(skierBoarded);
 
-  sem_wait(final);
+  sem_wait(&final[idL]);
 
+  idZ[idL] = UNBOARDED;
   sem_wait(writing);
   fprintf(f, "%d: L %d: going to ski\n", (*c)++, idL + 1);
   fflush(f);
   sem_post(writing);
 
-  idZ[idL] = UNBOARDED;
   sem_post(skierUnboarded);
 
   exit(0);
@@ -170,9 +166,8 @@ void initSemaphores() {
   c = mmap(NULL, sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
   skiersWaiting = mmap(NULL, sizeof(bool), PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
   idZ = mmap(NULL, L * sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
-  mutex = mmap(NULL, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
   writing = mmap(NULL, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
-  final = mmap(NULL, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
+  final = mmap(NULL, L * sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
   skierBoarded = mmap(NULL, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
   skierUnboarded = mmap(NULL, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
   skibusArrived = mmap(NULL, L * sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
@@ -180,7 +175,6 @@ void initSemaphores() {
   if (c == MAP_FAILED ||
     skiersWaiting == MAP_FAILED ||
     idZ == MAP_FAILED ||
-    mutex == MAP_FAILED ||
     writing == MAP_FAILED ||
     final == MAP_FAILED ||
     skierBoarded == MAP_FAILED ||
@@ -195,9 +189,10 @@ void initSemaphores() {
   for (int i = 0; i < L; i++) {
     idZ[i] = 0;
   }
-  sem_init(mutex, 1, 1);
   sem_init(writing, 1, 1);
-  sem_init(final, 1, 0);
+  for (int i = 0; i < L; i++) {
+    sem_init(&final[i], 1, 0);
+  }
   sem_init(skierBoarded, 1, 0);
   sem_init(skierUnboarded, 1, 0);
   for (int i = 0; i < L; i++) {
@@ -206,7 +201,6 @@ void initSemaphores() {
 }
 
 void freeSemaphores() {
-  sem_destroy(mutex);
   sem_destroy(writing);
   sem_destroy(final);
   sem_destroy(skierBoarded);
@@ -216,9 +210,8 @@ void freeSemaphores() {
   munmap(c, sizeof(int));
   munmap(skiersWaiting, sizeof(bool));
   munmap(idZ, L * sizeof(int));
-  munmap(mutex, sizeof(sem_t));
   munmap(writing, sizeof(sem_t));
-  munmap(final, sizeof(sem_t));
+  munmap(final, L * sizeof(sem_t));
   munmap(skierBoarded, sizeof(sem_t));
   munmap(skierUnboarded, sizeof(sem_t));
   munmap(skibusArrived, L * sizeof(sem_t));

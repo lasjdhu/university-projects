@@ -29,11 +29,10 @@ int TB; // Maximální doba jízdy autobusu mezi dvěma zastávkami
 int *c; // Čítač
 bool *skiersWaiting; // Lyžař čeká
 int *idZ; // id zastávky pro lyžaře (pole)
-sem_t *mutex; // Semafor pro kritickou sekci
 sem_t *writing; // Semafor pro zápis
-sem_t *final; // Semafor pro oznámení finalní zastávky
+sem_t *final; // Semafor pro oznámení finalní zastávky (pole)
 sem_t *skierUnboarded; // Semafor pro oznámení, že lyžař vystoupil
-sem_t *skierBoarded; // Semafor pro oznámení, že lyžař nastoupil (pole)
+sem_t *skierBoarded; // Semafor pro oznámení, že lyžař nastoupil
 sem_t *skibusArrived; // Semafor pro oznámení, že skibus dorazil na zastávku pro správného lyžaře (pole)
 
 /*
