@@ -1,23 +1,24 @@
 # UART RX
 
-## April 2023
+## April 2024
 
 ### Description
 
-Circuit for receiving data words after asynchronous serial lin
+Implementation of a circuit for receiving data
+
+### Result
+
+![Wave picture](assets/screen.png)
+![Simulation picture](assets/result.png)
 
 ### Architecture of the designed circuit at the RTL level
 
-> **_NOTE:_** There are no CLK and RST inputs at scheme
+> **_NOTE:_** Details can be found in file zprava.pdf
 
 ![Scheme picture](assets/uart.png)
 
 ### Finite State Machine
 
-Legend:
+> **_NOTE:_** Details can be found in file zprava.pdf
 
-- States: IDLE, WAIT_FISRT, READ_DATA, STOP_READ
-- Inputs: DIN, CNT_CYCLE [4:0], CNT_BIT [3:0]
-- Outputs (Moore): DOUT_VLD, CYCLE_EN, BIT_EN
-
-![Scheme picture](assets/fsm.png)
+![FSM picture](assets/fsm.png)
