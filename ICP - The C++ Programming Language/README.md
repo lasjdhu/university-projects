@@ -10,7 +10,7 @@
 
 ![Screenshot](assets/game.png)
 
-## Implementace:
+## Implementace
 
 Výsledkem je hra vytvořená pomocí prostředí Qt v C++.
 Uživatel používá GUI k interakci s hrou.
