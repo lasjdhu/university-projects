@@ -8,7 +8,7 @@
 
 ## Screenshot
 
-![Screenshot](game.png)
+![Screenshot](assets/game.png)
 
 ## Implementace:
 
