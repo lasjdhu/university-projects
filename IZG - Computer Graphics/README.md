@@ -8,7 +8,7 @@ Files `gpu.cpp` and `prepareModel.cpp` are the only files I modified. Whole proj
 
 ## Results
 
-15.8/20 points
+15.8 / 20 points
 
 ## Description
 
