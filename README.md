@@ -16,22 +16,22 @@ Welcome to my repository! This repository contains various projects I worked on 
 
 ## 📁 Projects List
 
-Here is a list of the courses and their respective projects:
+Here is a list of the courses and their respective projects status (which basically means that code is usable):
 
-| Course Code | Course Name                                | Last Update  | Status |
-| ----------- | ------------------------------------------ | ------------ | ------ |
-| IAL         | Algorithms                                 | 5 months ago | ✅     |
-| ICP         | The C++ Programming Language               | 4 months ago | ✅     |
-| IDS         | Database Systems                           | 5 months ago | ✅     |
-| INC         | Digital Systems Design                     | 5 months ago | ✅     |
-| IOS         | Operating Systems                          | 5 months ago | ✅     |
-| IPP         | Principles of Programming Languages        | 7 months ago | ✅     |
-| ISC         | PC Seminar                                 | 7 months ago | ✅     |
-| ISJ         | Scripting Languages                        | 7 months ago | ✅     |
-| ISS         | Signals and Systems                        | 5 months ago | ✅     |
-| IZG         | Computer Graphics                          | 4 months ago | ✅     |
-| IZLO        | Introduction to Logic for Computer Science | 4 months ago | ✅     |
-| IZP         | Introduction to Programming Systems        | 7 months ago | ✅     |
+| Course Code | Course Name                                | Status |
+| ----------- | ------------------------------------------ | ------ |
+| IAL         | Algorithms                                 | ✅     |
+| ICP         | The C++ Programming Language               | ✅     |
+| IDS         | Database Systems                           | ✅     |
+| INC         | Digital Systems Design                     | ✅     |
+| IOS         | Operating Systems                          | ✅     |
+| IPP         | Principles of Programming Languages        | ✅     |
+| ISC         | PC Seminar                                 | ✅     |
+| ISJ         | Scripting Languages                        | ✅     |
+| ISS         | Signals and Systems                        | ✅     |
+| IZG         | Computer Graphics                          | ✅     |
+| IZLO        | Introduction to Logic for Computer Science | ✅     |
+| IZP         | Introduction to Programming Systems        | ✅     |
 
 ## 🚀 How to Navigate This Repository
 
