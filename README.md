@@ -33,8 +33,6 @@ Here is a list of the courses and their respective projects:
 | IZLO        | Introduction to Logic for Computer Science | 4 months ago | ✅     |
 | IZP         | Introduction to Programming Systems        | 7 months ago | ✅     |
 
----
-
 ## 🚀 How to Navigate This Repository
 
 - Each course folder contains a **README.md** with detailed information about the respective projects.
