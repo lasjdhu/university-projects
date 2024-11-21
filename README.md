@@ -1,7 +1,4 @@
 <p align="center">
-  <a href="https://www.fit.vut.cz/" target="_blank">
-    <img src="https://img.shields.io/badge/University-Brno%20University%20of%20Technology-blue.svg" alt="University Badge"/>
-  </a>
   <img src="https://img.shields.io/badge/Years-2021--2024-lightgrey.svg" alt="Years Badge"/>
   <img src="https://img.shields.io/badge/Status-In%20Progress-green.svg" alt="Status Badge"/>
 </p>
@@ -24,14 +21,16 @@ Here is a list of the courses and their respective projects status (which basica
 | ICP         | The C++ Programming Language               | ✅     |
 | IDS         | Database Systems                           | ✅     |
 | INC         | Digital Systems Design                     | ✅     |
+| INP         | Design of Computer Systems                 | 🔄     |
 | IOS         | Operating Systems                          | ✅     |
 | IPP         | Principles of Programming Languages        | ✅     |
 | ISC         | PC Seminar                                 | ✅     |
 | ISJ         | Scripting Languages                        | ✅     |
-| ISS         | Signals and Systems                        | ✅     |
+| ISS         | Signals and Systems                        | 🔄     |
 | IZG         | Computer Graphics                          | ✅     |
 | IZLO        | Introduction to Logic for Computer Science | ✅     |
 | IZP         | Introduction to Programming Systems        | ✅     |
+| IFJ         | Formal Languages and Compilers             | 🔄     |
 
 ## 🚀 How to Navigate This Repository
 
@@ -40,6 +39,9 @@ Here is a list of the courses and their respective projects status (which basica
 
 ## 📜 Regarding License(s)
 
+- Some files have Licenses specified in headers, some do not. If you do not see a License in header this is *probably* file I wrote myself
 - Some projects contain code provided by professors, identifiable by comments in the source files.
 - Several projects were team-based. When applicable, I credit my collaborators with their GitHub profiles in the corresponding `README.md` files.
-- **Note:** Usage of this code may be restricted due to the inclusion of professor-contributed code and team project work. **If you're a student at BUT FIT, do not reuse this code to avoid plagiarism issues.**
+
+- **Note:** Usage of this code may be restricted due to the inclusion of professor-contributed code and team project work.
+- **IMPORTANT: Do not reuse this code to avoid plagiarism issues.**
