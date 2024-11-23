@@ -5,8 +5,12 @@
 
 ; DATA SEGMENT
                 .data
-msg:            .asciiz "Hello world!" ; sem doplnte vase "jmenoprijmeni"
-cipher:         .space  31 ; misto pro zapis zasifrovaneho textu
+msg:            .asciiz "dmitriiivanushkin"  ; sem doplnte vase "jmenoprijmeni"
+cipher:         .space  31                   ; misto pro zapis zasifrovaneho textu
+                ; key
+posuv_0:        .word  9                    ; i = 9
+posuv_1:        .word  22                   ; v = 22
+posuv_2:        .word  1                    ; a = 1
 ; zde si muzete nadefinovat vlastni promenne ci konstanty,
 ; napr. hodnoty posuvu pro jednotlive znaky sifrovacho klice
 
