@@ -21,7 +21,7 @@ Here is a list of the courses and their respective projects status (which basica
 | ICP         | The C++ Programming Language               | ✅     |
 | IDS         | Database Systems                           | ✅     |
 | INC         | Digital Systems Design                     | ✅     |
-| INP         | Design of Computer Systems                 | 🔄     |
+| INP         | Design of Computer Systems                 | ✅     |
 | IOS         | Operating Systems                          | ✅     |
 | IPP         | Principles of Programming Languages        | ✅     |
 | ISC         | PC Seminar                                 | ✅     |
