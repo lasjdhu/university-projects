@@ -12,32 +12,10 @@ Your task will be to automatically match the recordings coming from one car mode
 
 ### Implementation
 
----
-jupyter:
-  colab:
-    toc_visible: true
-  kernelspec:
-    display_name: Python 3
-    name: python3
-  language_info:
-    name: python
-  nbformat: 4
-  nbformat_minor: 0
----
+#### Preparations
 
-::: {.cell .markdown id="YfLwAiEij8qI"}
-# Dmitrii Ivanushkin (xivanu00) - ISS Project
-:::
+##### 1.1 Import libraries
 
-::: {.cell .markdown id="cAv0U530B7Ak"}
-## Preparations
-:::
-
-::: {.cell .markdown id="n1ZJKS7f4DzN"}
-### 1.1 Import libraries {#11-import-libraries}
-:::
-
-::: {.cell .code execution_count="222" id="rt9zooK4PoOg"}
 ``` python
 import os
 import re
@@ -53,32 +31,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 ```
-:::
 
-::: {.cell .markdown id="4Mq-4w6v4OHW"}
-### 1.2 Download the zip file {#12-download-the-zip-file}
-:::
+##### 1.2 Download the zip file
 
-::: {.cell .code execution_count="223" colab="{\"base_uri\":\"https://localhost:8080/\"}" id="6dVSj2mxtuOw" outputId="666a3a31-64b8-4d62-9220-154750900825"}
 ``` python
 login = "xivanu00"
 zip_file = login + ".zip"
-assignment_file = "https://www.fit.vut.cz/study/course/ISS/public/proj2024-25/personal/" + zip_file
+assignment_file = "https://********/" + zip_file
 !wget $assignment_file
 !unzip -o $zip_file
 ```
-
-::: {.output .stream .stdout}
-    --2024-12-16 21:20:01--  https://www.fit.vut.cz/study/course/ISS/public/proj2024-25/personal/xivanu00.zip
-    Resolving www.fit.vut.cz (www.fit.vut.cz)... 147.229.9.65, 2001:67c:1220:809::93e5:941
-    Connecting to www.fit.vut.cz (www.fit.vut.cz)|147.229.9.65|:443... connected.
-    HTTP request sent, awaiting response... 200 OK
-    Length: 217533 (212K) [application/zip]
-    Saving to: ‘xivanu00.zip.2’
-
-    xivanu00.zip.2      100%[===================>] 212.43K   232KB/s    in 0.9s    
-
-    2024-12-16 21:20:03 (232 KB/s) - ‘xivanu00.zip.2’ saved [217533/217533]
 
     Archive:  xivanu00.zip
       inflating: xivanu00/Audi_A5_Drive.wav  
@@ -89,22 +51,19 @@ assignment_file = "https://www.fit.vut.cz/study/course/ISS/public/proj2024-25/pe
       inflating: xivanu00/test_q.wav     
       inflating: xivanu00/Mercedes_300SE_Drive.wav  
       inflating: xivanu00/test_r.wav     
-:::
-:::
 
-::: {.cell .markdown id="A25o_uuYgvB6"}
-### 1.3 Load data {#13-load-data}
+##### 1.3 Load data
 
--   **Working with references** `<br />`{=html} References itself will
-    be in `ref_signals` `<br />`{=html} Reference labels in `ref_labels`
-    `<br />`{=html} Reference count in `N_ref`
+-   **Working with references**<br />
+    References will be in `ref_signals` <br />
+    Reference labels in `ref_labels`<br />
+    Reference count in `N_ref`
 
--   **Working with tests** `<br />`{=html} Tests itself will be in
-    `test_signals` `<br />`{=html} Test labels in `test_labels`
-    `<br />`{=html} Test count in `N_test`
-:::
-
-::: {.cell .code execution_count="224" colab="{\"base_uri\":\"https://localhost:8080/\",\"height\":436}" id="Jx5eaS7Fgy7i" outputId="249d3ba0-5de8-423d-81b8-92ad503c4b44"}
+-   **Working with tests**<br />
+    Tests will be in `test_signals`<br />
+    Test labels in `test_labels`<br />
+    Test count in `N_test`
+    
 ``` python
 def get_signals(labs):
   signals = []
@@ -134,16 +93,10 @@ ref_signals, N_ref, Fs_ref = get_signals(ref_labels)
 print (ref_labels)
 ```
 
+#### Visualizing raw data
 
-::: {.cell .markdown id="lKhKpK084aE6"}
-## Visualizing raw data
-:::
+##### 2.1 Create `draw_plot` decorator for convenience
 
-::: {.cell .markdown id="tudwdsr0FYky"}
-### 2.1 Create `draw_plot` decorator for convenience {#21-create-draw_plot-decorator-for-convenience}
-:::
-
-::: {.cell .code execution_count="225" id="hc8pPnPdFoMC"}
 ``` python
 def draw_plot(draw_func):
   def wrapper(signals, Fs, labels, title):
@@ -163,21 +116,17 @@ def draw_plot(draw_func):
     print("")
   return wrapper
 ```
-:::
 
-::: {.cell .markdown id="EgRyIL865jpZ"}
-### 2.2 Visualize raw signals {#22-visualize-raw-signals}
+##### 2.2 Visualize raw signals
 
-I\'ll start with drawing plots of raw signals. I\'ll use subplots for
-each one of `test_signals` and `ref_signals`
+I'll start with drawing plots of raw signals. I'll use subplots for each one of `test_signals` and `ref_signals`
 
--   **x-axis** `<br />`{=html} Time `t` \[s\] (always 1s, but I
-    calculate it using formula `t = n / Fs`)
+-   **x-axis**<br />
+    Time `t` [s] (always 1s, but I calculate it using formula `t = n / Fs`)
 
--   **y-axis** `<br />`{=html} Amplitude of `signal`
-:::
+-   **y-axis**<br />
+    Amplitude of `signal`
 
-::: {.cell .code execution_count="226" colab="{\"base_uri\":\"https://localhost:8080/\",\"height\":1000}" id="-G98yvM8y1Y2" outputId="337412ec-0523-4695-e746-b23ddc903c7a"}
 ``` python
 def get_t(signal, Fs):
   N = len(signal)
@@ -199,38 +148,22 @@ draw_raw_signal(test_signals, Fs_test, test_labels, "Test Signals")
 draw_raw_signal(ref_signals, Fs_ref, ref_labels, "Reference Signals")
 ```
 
-::: {.output .display_data}
 ![](assets/1.png)
-:::
-
-::: {.output .stream .stdout}
-:::
-
-::: {.output .display_data}
 ![](assets/2.png)
-:::
 
-::: {.output .stream .stdout}
-:::
-:::
-
-::: {.cell .markdown id="oqO7kaXj9Idi"}
-### 2.3 Visualize magnitude with FFT {#23-visualize-magnitude-with-fft}
+##### 2.3 Visualize magnitude with FFT
 
 Now I would like to perform the Fast Fourier Transform (FFT) to analyze
 the frequencies of reference and test audio signals. I decided to start
 with it because audio signals should contain periodic patterns that we
 can compare later on.
 
--   **x-axis** `<br />`{=html} Frequencies \[Hz\] that are present in a
-    `signal`
+-   **x-axis**<br />
+    Frequencies [Hz] that are present in a `signal`
 
--   **y-axis** `<br />`{=html} Magnitude \[dB\] that shows strength of
-    frequencies. Higher magnitudes indicate dominant frequencies in a
-    `signal`.
-:::
+-   **y-axis**<br />
+    Magnitude [dB] that shows strength of frequencies. Higher magnitudes indicate dominant frequencies in a `signal`.
 
-::: {.cell .code execution_count="227" colab="{\"base_uri\":\"https://localhost:8080/\",\"height\":1000}" id="-wzwzyhl9ijh" outputId="0b2a03d0-cb39-48e0-aedb-e81403d6b080"}
 ``` python
 def get_fft(signal, T):
   # Use built-in FFT from numpy to get spectrum
@@ -256,40 +189,20 @@ draw_fft_spectrum(test_signals, Fs_test, test_labels, "Test Signals Spectrum")
 draw_fft_spectrum(ref_signals, Fs_ref, ref_labels, "Reference Signals Spectrum")
 ```
 
-::: {.output .display_data}
 ![](assets/3.png)
-:::
-
-::: {.output .stream .stdout}
-:::
-
-::: {.output .display_data}
 ![](assets/4.png)
-:::
 
-::: {.output .stream .stdout}
-:::
-:::
-
-::: {.cell .markdown id="yxqKziwD5m6k"}
 From the plots printed above I can tell at a glance that this
 represenation of tests and references has similarity in some cases.
 These could turn out to be totally wrong in the end:
 
--   **test_q** and **Mercedes_300SE_Drive** spectra have a similar
-    "sliding down" after about 7000 Hz
--   **test_r** and **Fiat_Panda_Drive** spectra also have similar
-    slidings that \"flatten\" around 8000 Hz
+-   **test_q** and **Mercedes_300SE_Drive** spectra have a similar "sliding down" after about 7000 Hz
+-   **test_r** and **Fiat_Panda_Drive** spectra also have similar slidings that \"flatten\" around 8000 Hz
 
-Other plots don\'t share such obvious similarities to speak
-definitively.
-:::
+Other plots don't share such obvious similarities to speak definitively.
 
-::: {.cell .markdown id="9TTaG1UhH4WW"}
-### 2.4 Visualize PSD {#24-visualize-psd}
-:::
+##### 2.4 Visualize PSD
 
-::: {.cell .markdown id="V3vcW3-4nixc"}
 Before I start extracting features and making further comparisons, I
 would like to try Power Spectral Density (PSD) instead of a classic raw
 FFT. It *should* be able to reduce noise, better highlight
@@ -299,14 +212,12 @@ method** to extract PSD by windowing each sample (I divided signal to
 1024 of them) and then I convert the PSD to a logarithmic scale for
 better visualization and comparison.
 
--   **x-axis**`</br>`{=html} Frequencies \[Hz\] that are present in a
-    `signal`
+-   **x-axis**</br>
+    Frequencies \[Hz\] that are present in a `signal`
 
--   **y-axis**`</br>`{=html} Power Spectral Density that shows how much
-    of the signal\'s energy resides at specific frequencies.
-:::
+-   **y-axis**</br>
+    Power Spectral Density that shows how much of the signal\'s energy resides at specific frequencies.
 
-::: {.cell .code execution_count="228" colab="{\"base_uri\":\"https://localhost:8080/\",\"height\":1000}" id="rjnU_ACXJdh0" outputId="aee7624f-8d0e-4168-e902-3c3b4fa40062"}
 ``` python
 def get_psd(signal, Fs):
   # Use built-in PSD extraction (Welch's method)
@@ -329,40 +240,20 @@ draw_psd(test_signals, Fs_test, test_labels, "Test Signals PSD")
 draw_psd(ref_signals, Fs_ref, ref_labels, "Reference Signals PSD")
 ```
 
-::: {.output .display_data}
 ![](assets/5.png)
-:::
-
-::: {.output .stream .stdout}
-:::
-
-::: {.output .display_data}
 ![](assets/6.png)
-:::
 
-::: {.output .stream .stdout}
-:::
-:::
+#### Choosing similarity metric and making comparisons
 
-::: {.cell .markdown id="2XTOJ7-9eYpE"}
-## Choosing similarity metric and making comparisons
-:::
+##### 3.1 Choose a metric
 
-::: {.cell .markdown id="2HeBpzRURrxK"}
-### 3.1 Choose a metric {#31-choose-a-metric}
-:::
-
-::: {.cell .markdown id="Az5By8Y8ppN_"}
 In this last segment I need to decide which metric I want to use for my
 task. I decided to go with **Mean Squared Error** (MSE). MSE calculates
 how much the frequency content of one signal deviates from the other.
 For convenience I normalize MSE so after it, higher values in the
 `combined_matrix` represent less difference between the signals, meaning
-they are more similar, and lower values mean the signals are less
-similar.
-:::
+they are more similar, and lower values mean the signals are less similar.
 
-::: {.cell .code execution_count="229" id="JcPHiOOwfdyv"}
 ``` python
 def calculate_combined_score(signal1, signal2, Fs, max_mse):
   _, psd1 = get_psd(signal1, Fs)
@@ -394,18 +285,11 @@ def create_combined_matrix(test_signals, ref_signals, Fs):
 
   return combined_matrix
 ```
-:::
 
-::: {.cell .markdown id="Hwn3s0dSR5Ig"}
-### 3.2 Visuallize matrix and make predictions {#32-visuallize-matrix-and-make-predictions}
-:::
+##### 3.2 Visuallize matrix and make predictions
 
-::: {.cell .markdown id="PBGgksPmTFfc"}
-Now when I have combined matrix I can easily visualize it with a
-**heatmap** and use it assigning signal pairs.
-:::
+Now when I have combined matrix I can easily visualize it with a **heatmap** and use it assigning signal pairs.
 
-::: {.cell .code execution_count="230" colab="{\"base_uri\":\"https://localhost:8080/\",\"height\":805}" id="K2eexhxvRy0R" outputId="bef73337-4eff-4676-d7c3-135a612e6c39"}
 ``` python
 def plot_heatmap(matrix, test_labels, ref_labels, title, xlabel, ylabel):
   plt.figure(figsize=(10, 8))
@@ -439,24 +323,16 @@ for test_signal, assignment in assignments.items():
   print(f"Test Signal: {test_signal} -> {assignment}")
 ```
 
-::: {.output .display_data}
 ![](assets/7.png)
-:::
 
-::: {.output .stream .stdout}
 
     Test Signal: test_b -> No match
     Test Signal: test_r -> No match
     Test Signal: test_i -> Audi_A5_Drive
     Test Signal: test_q -> Mercedes_300SE_Drive
-:::
-:::
 
-::: {.cell .markdown id="gKc3el04RmX5"}
-### 3.3 Aftermath {#33-aftermath}
-:::
+##### 3.3 Aftermath
 
-::: {.cell .markdown id="2KZRYEqbQSUm"}
 So, the results aren\'t too exciting. I think I correctly identified
 `test_i` (Audi) and `test_q` (Mercedes), but there should be the third
 car. I tried to use different metrics like **Euclidean distance**,
@@ -465,4 +341,3 @@ metrics and adjust weights when I was calculating `combined_matrix`, but
 again I had no luck. There could be of course a problem with the signals
 preprocessing. Maybe I needed to apply filter, smoothen data or increase
 `nperseg` value while calculating PSD
-:::
