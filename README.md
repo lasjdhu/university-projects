@@ -26,7 +26,7 @@ Here is a list of the courses and their respective projects status (which basica
 | IPP         | Principles of Programming Languages        | ✅     |
 | ISC         | PC Seminar                                 | ✅     |
 | ISJ         | Scripting Languages                        | ✅     |
-| ISS         | Signals and Systems                        | 🔄     |
+| ISS         | Signals and Systems                        | ✅     |
 | IZG         | Computer Graphics                          | ✅     |
 | IZLO        | Introduction to Logic for Computer Science | ✅     |
 | IZP         | Introduction to Programming Systems        | ✅     |
