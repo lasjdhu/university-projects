@@ -30,7 +30,7 @@ Here is a list of the courses and their respective projects status (which basica
 | IZG         | Computer Graphics                          | ✅     |
 | IZLO        | Introduction to Logic for Computer Science | ✅     |
 | IZP         | Introduction to Programming Systems        | ✅     |
-| IFJ         | Formal Languages and Compilers             | 🔄     |
+| IFJ         | Formal Languages and Compilers             | ✅     |
 
 ## 🚀 How to Navigate This Repository
 
