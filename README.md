@@ -44,4 +44,4 @@ Here is a list of the courses and their respective projects status (which basica
 - Several projects were team-based. When applicable, I credit my collaborators with their GitHub profiles in the corresponding `README.md` files.
 
 - **Note:** Usage of this code may be restricted due to the inclusion of professor-contributed code and team project work.
-- **IMPORTANT: Do not reuse this code to avoid plagiarism issues.**
+>**IMPORTANT: Do not reuse this code to avoid plagiarism issues.**
