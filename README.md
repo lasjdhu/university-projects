@@ -15,21 +15,22 @@ Welcome to my repository! This repository contains various projects I worked on 
 
 Here is a list of the courses and their respective projects status (which basically means that code is usable):
 
-| Course Code | Course Name                                | Status |
-| ----------- | ------------------------------------------ | ------ |
-| IAL         | Algorithms                                 |   ✅   |
-| ICP         | The C++ Programming Language               |   ✅   |
-| IDS         | Database Systems                           |   ✅   |
-| INC         | Digital Systems Design                     |   ✅   |
-| INP         | Design of Computer Systems                 |   ✅   |
-| IOS         | Operating Systems                          |   ✅   |
-| ISC         | PC Seminar                                 |   ✅   |
-| ISJ         | Scripting Languages                        |   ✅   |
-| ISS         | Signals and Systems                        |   ✅   |
-| IZG         | Computer Graphics                          |   ✅   |
-| IZLO        | Introduction to Logic for Computer Science |   ✅   |
-| IZP         | Introduction to Programming Systems        |   ✅   |
-| IFJ         | Formal Languages and Compilers             |   ✅   |
+| Course Code | Course Name                                | What I created          |
+| ----------- | ------------------------------------------ | ----------------------- |
+| IAL         | Algorithms                                 | Basic algorithms        |
+| ICP         | The C++ Programming Language               | Pacman                  |
+| IDS         | Database Systems                           | Pharmacy DB             |
+| IFJ         | Formal Languages and Compilers             | Zig compiler            |
+| INC         | Digital Systems Design                     | Circuit design          |
+| INP         | Design of Computer Systems                 | Brainf*ck compiler, Vigener encoder |
+| IOS         | Operating Systems                          | Semaphores, Crypto exchange script  |
+| IPP         | Principles of Programming Languages        | Interpreter of custom language      |
+| ISC         | PC Seminar                                 | Palindrome finder       |
+| ISJ         | Scripting Languages                        | Some python scripts     |
+| ISS         | Signals and Systems                        | Car engines audio processor         |
+| IZG         | Computer Graphics                          | Shaders                 |
+| IZLO        | Introduction to Logic for Computer Science | SAT and SMT solvers     |
+| IZP         | Introduction to Programming Systems        | Password checker        |
 
 ## 🚀 How to Navigate This Repository
 
