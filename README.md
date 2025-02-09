@@ -17,24 +17,24 @@ Here is a list of the courses and their respective projects status (which basica
 
 | Course Code | Course Name                                | Status |
 | ----------- | ------------------------------------------ | ------ |
-| IAL         | Algorithms                                 | ✅     |
-| ICP         | The C++ Programming Language               | ✅     |
-| IDS         | Database Systems                           | ✅     |
-| INC         | Digital Systems Design                     | ✅     |
-| INP         | Design of Computer Systems                 | ✅     |
-| IOS         | Operating Systems                          | ✅     |
-| IPP         | Principles of Programming Languages        | ✅     |
-| ISC         | PC Seminar                                 | ✅     |
-| ISJ         | Scripting Languages                        | ✅     |
-| ISS         | Signals and Systems                        | ✅     |
-| IZG         | Computer Graphics                          | ✅     |
-| IZLO        | Introduction to Logic for Computer Science | ✅     |
-| IZP         | Introduction to Programming Systems        | ✅     |
-| IFJ         | Formal Languages and Compilers             | ✅     |
+| IAL         | Algorithms                                 |   ✅   |
+| ICP         | The C++ Programming Language               |   ✅   |
+| IDS         | Database Systems                           |   ✅   |
+| INC         | Digital Systems Design                     |   ✅   |
+| INP         | Design of Computer Systems                 |   ✅   |
+| IOS         | Operating Systems                          |   ✅   |
+| IPP         | Principles of Programming Languages        |   ✅   |
+| ISC         | PC Seminar                                 |   ✅   |
+| ISJ         | Scripting Languages                        |   ✅   |
+| ISS         | Signals and Systems                        |   ✅   |
+| IZG         | Computer Graphics                          |   ✅   |
+| IZLO        | Introduction to Logic for Computer Science |   ✅   |
+| IZP         | Introduction to Programming Systems        |   ✅   |
+| IFJ         | Formal Languages and Compilers             |   ✅   |
 
 ## 🚀 How to Navigate This Repository
 
-- Each course folder contains a **README.md** with detailed information about the respective projects.
+- Each course project(s) contain(s) a **README.md** with detailed information about the respective projects.
 - The repository is updated regularly to reflect the latest changes and additions to my university projects.
 
 ## 📜 Regarding License(s)

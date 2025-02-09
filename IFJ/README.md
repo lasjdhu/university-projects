@@ -13,10 +13,10 @@ Main parts:
 
 ### Authors
 
-[@lasjdhu](https://github.com/lasjdhu)
-[@prosperritty](https://github.com/prosperritty)
-[@m3m01r](https://github.com/m3m01r)
-[@JustMell0](https://github.com/JustMell0)
+- [@lasjdhu](https://github.com/lasjdhu)
+- [@prosperritty](https://github.com/prosperritty)
+- [@m3m01r](https://github.com/m3m01r)
+- [@JustMell0](https://github.com/JustMell0)
 
 ### Compilation flow
 
@@ -50,12 +50,12 @@ Main parts:
 ### Official test results
 
 ```
-Lexical analysis (error detection): 91 % (192/210 mb) <br/>
-Syntactic analysis (error detection): 89 % (240/267 mb) <br/>
-Semantic analysis (error detection): 94 % (380/402 mb) <br/>
-Interpretation of translated code (basic): 90 % (327/360 mb) <br/>
-Interpretation of translated code (expressions, built-in functions): 95 % (162/170 mb) <br/>
-Interpretation of translated code (complex): 69 % (293/421 mb) <br/>
+Lexical analysis (error detection): 91 % (192/210 mb)
+Syntactic analysis (error detection): 89 % (240/267 mb)
+Semantic analysis (error detection): 94 % (380/402 mb)
+Interpretation of translated code (basic): 90 % (327/360 mb)
+Interpretation of translated code (expressions, built-in functions): 95 % (162/170 mb)
+Interpretation of translated code (complex): 69 % (293/421 mb)
 
 FUNEXP 70 % (106/150 mb)
 
