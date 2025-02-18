@@ -23,7 +23,6 @@ Here is a list of the courses and their respective projects status (which basica
 | INC         | Digital Systems Design                     |   ✅   |
 | INP         | Design of Computer Systems                 |   ✅   |
 | IOS         | Operating Systems                          |   ✅   |
-| IPP         | Principles of Programming Languages        |   ✅   |
 | ISC         | PC Seminar                                 |   ✅   |
 | ISJ         | Scripting Languages                        |   ✅   |
 | ISS         | Signals and Systems                        |   ✅   |
