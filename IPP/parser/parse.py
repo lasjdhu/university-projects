@@ -1,4 +1,6 @@
-from lark import Lark
+from lark import Lark, UnexpectedCharacters, UnexpectedToken, Token
+import xml.etree.ElementTree as ET
+from xml.dom.minidom import parseString
 import sys
 
 OK = 0
@@ -13,28 +15,46 @@ ERROR_SEMANTIC_ARITY = 33       # Bad arity of the block (instance method def)
 ERROR_SEMANTIC_COLLISION = 34   # Local var is in collision with formal param
 ERROR_INTERNAL = 99             # Internal error (others)
 
+USAGE_TEXT = """
+Usage: python parse.py [--help]
+
+Description:
+    This script of type filter reads the SOL25 source code from stdin,
+    checks the code for lexical, syntactic, and static semantic correctness,
+    and prints the XML representation of the abstract syntax tree to stdout.
+
+Options:
+    --help  Displays this help message and exit.
+"""
+
 
 SOL25_GRAMMAR = """
 program: class program                      # 1. Program → Class Program
        |                                    # 2. Program → ε
-class: "class" CID ":" CID "{" method "}"   # 3. Class → class ⟨Cid⟩ : ⟨Cid⟩ { Method }
+# 3. Class → class ⟨Cid⟩ : ⟨Cid⟩ { Method }
+class: "class" CID ":" CID "{" method "}"
 method: selector block method               # 4. Method → Selector Block Method
       |                                     # 5. Method → ε
 selector: ID                                # 6. Selector → ⟨id⟩
         | ID_COLON selectortail             # 7. Selector → ⟨id:⟩ SelectorTail
-selectortail: ID_COLON selectortail         # 8. SelectorTail → ⟨id:⟩ SelectorTail
+# 8. SelectorTail → ⟨id:⟩ SelectorTail
+selectortail: ID_COLON selectortail
             |                               # 9. SelectorTail → ε
-block: "[" blockpar "|" blockstat "]"       # 10. Block → [ BlockPar | BlockStat ]
+# 10. Block → [ BlockPar | BlockStat ]
+block: "[" blockpar "|" blockstat "]"
 blockpar: COLON_ID blockpar                 # 11. BlockPar → ⟨:id⟩ BlockPar
         |                                   # 12. BlockPar → ε
-blockstat: ID ":=" expr "." blockstat       # 13. BlockStat → ⟨id⟩ := Expr . BlockStat
+# 13. BlockStat → ⟨id⟩ := Expr . BlockStat
+blockstat: ID ":=" expr "." blockstat
          |                                  # 14. BlockStat → ε
 expr: exprbase exprtail                     # 15. Expr → ExprBase ExprTail
 exprtail: ID                                # 16. ExprTail → ⟨id⟩
         | exprsel                           # 17. ExprTail → ExprSel
-exprsel: ID_COLON exprbase exprsel          # 18. ExprSel → ⟨id:⟩ ExprBase ExprSel
+# 18. ExprSel → ⟨id:⟩ ExprBase ExprSel
+exprsel: ID_COLON exprbase exprsel
        |                                    # 19. ExprSel → ε
-exprbase: INT                               # 20.* ExprBase → ⟨int⟩ | ⟨str⟩ | ⟨id⟩ | ⟨Cid⟩
+# 20.* ExprBase → ⟨int⟩ | ⟨str⟩ | ⟨id⟩ | ⟨Cid⟩
+exprbase: INT
         | STR                               # 20.
         | ID                                # 20.
         | CID                               # 20.
@@ -57,40 +77,68 @@ COMMENT: /"[^"]*"/
 """
 
 
-def print_usage():
-    usage_text = """
-Usage: python parse.py [--help]
-
-Description:
-    This script of type filter reads the SOL25 source code from stdin,
-    checks the code for lexical, syntactic, and static semantic correctness,
-    and prints the XML representation of the abstract syntax tree to stdout.
-
-Options:
-    --help  Displays this help message and exit.
-"""
-    print(usage_text)
+def print_message_and_exit(msg, exit_code):
+    print(msg)
+    sys.exit(exit_code)
 
 
-def main():
-    if len(sys.argv) > 1:
+def parse_args():
+    if len(sys.argv) == 2:
         if sys.argv[1] == '--help':
-            print_usage()
-            sys.exit(OK)
+            print_message_and_exit(USAGE_TEXT, OK)
         else:
-            print("Unknown argument:", sys.argv[1])
-            sys.exit(ERROR_SCRIPT_PARAM)
+            print_message_and_exit(
+                f"Unknown argument: {sys.argv[1]}",
+                ERROR_SCRIPT_PARAM
+            )
+    elif len(sys.argv) < 0 or len(sys.argv) > 2:
+        print_message_and_exit("Too many arguments", ERROR_SCRIPT_PARAM)
 
-    p = Lark(SOL25_GRAMMAR, start="program", parser="lalr")
+
+def parse_source_code():
+    try:
+        source_code = sys.stdin.read()
+    except IOError:
+        print_message_and_exit("Can't read from stdin", ERROR_SCRIPT_INPUT)
 
     try:
-        ast = p.parse(sys.stdin.read())
+        p = Lark(SOL25_GRAMMAR, start="program", parser="lalr")
+        return p.parse(source_code)
+    except UnexpectedCharacters as e:
+        print_message_and_exit(f"Lexical error: {e}", ERROR_LEXICAL)
+    except UnexpectedToken as e:
+        print_message_and_exit(f"Syntax error: {e}", ERROR_SYNTAX)
     except Exception as e:
-        print("Syntax error:", e)
-        sys.exit(ERROR_SYNTAX)
+        print_message_and_exit(f"Internal error: {e}", ERROR_INTERNAL)
 
-    print(ast)
+
+def porduce_output(xml_tree):
+    try:
+        rough_string = ET.tostring(xml_tree, encoding="unicode")
+        p = parseString(rough_string)
+        return p.toprettyxml(indent="  ")
+    except Exception as e:
+        print_message_and_exit(f"Internal error: {e}", ERROR_INTERNAL)
+
+
+def create_xml_tree(node):
+    try:
+        if isinstance(node, Token):
+            element = ET.Element(node.type)
+            element.text = node.value
+            return element
+
+        element = ET.Element(node.data)
+        for child in node.children:
+            element.append(create_xml_tree(child))
+        return element
+    except Exception as e:
+        print_message_and_exit(f"Internal error: {e}", ERROR_INTERNAL)
 
 
 if __name__ == "__main__":
-    main()
+    parse_args()
+    ast = parse_source_code()
+    xml_tree = create_xml_tree(ast)
+    output = porduce_output(xml_tree)
+    print_message_and_exit(output, OK)
