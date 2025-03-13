@@ -1,0 +1,5 @@
+class Main : Object {
+  run "<- definice metody - bezparametrický selektor run"
+[ :one :two | r := Integer from: two. ]
+    ]
+}
