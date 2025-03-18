@@ -56,7 +56,6 @@ exprtail: ID                                # 16. ExprTail → ⟨id⟩
 exprsel: ID_COLON exprbase exprsel          # 18. ExprSel → ⟨id:⟩ ExprBase ExprSel
         |                                   # 19. ExprSel → ε
 exprbase: INT                               # 20.* ExprBase → ⟨int⟩ | ⟨str⟩ | ⟨id⟩ | ⟨Cid⟩
-        | ESCAPED_STRING                    # 20.
         | SINGLE_STRING                     # 20.
         | ID                                # 20.
         | CID                               # 20.
@@ -71,108 +70,229 @@ SINGLE_STRING: /'[^'\\\\]*(\\\\.[^'\\\\]*)*'/
 
 COMMENT: /"[^"]*"/
 
-%import common (INT, ESCAPED_STRING, WS)
+%import common (INT, WS)
 
 %ignore WS
 %ignore COMMENT
 """
 
+class Validator:
 
-class XML:
+
+class ASTConverter:
     def __init__(self):
-        self.all_classes = {}
-        self.active_class = None
-        self.active_method = None
-        self.local_vars = {}
+        self.class_registry = {}
+        self.current_class = None
+        self.current_method = None
+        self.scope_variables = {}
 
-    def build_xml(self, parse_tree, comment_list):
+    def generate_xml(self, parse_tree, comment_list):
+        """Create XML representation of the AST"""
         root = ET.Element("program", language="SOL25")
 
         if comment_list:
             description = comment_list[0].value.strip('"').replace("\n", "&nbsp;")
             root.set("description", description)
 
-        self._find_classes(parse_tree)
-        self._verify_main_class()
-        self._build_xml_tree(parse_tree, root)
+        self.collect_classes(parse_tree)
+        self.validate_main_class()
+        self.process_tree_to_xml(parse_tree, root)
 
         return root
 
-    def _find_classes(self, program_node):
+    def collect_classes(self, program_node):
+        """Collect all class definitions"""
         for node in program_node.children:
             if node.data == "class":
-                class_name = self._get_node_value(node.children[0])
-                parent_name = self._get_node_value(node.children[1])
+                class_name = self.extract_token_value(node.children[0])
+                parent_name = self.extract_token_value(node.children[1])
 
-                if class_name in self.all_classes:
-                    print_and_exit(
-                        "Semantic other error", ERROR_SEMANTIC_OTHER, sys.stderr
-                    )
+                self.validate_unique_class(class_name)
 
-                self.all_classes[class_name] = {
+                self.class_registry[class_name] = {
                     "parent": parent_name,
                     "methods": {},
                 }
 
-                self._find_methods(node.children[2], class_name)
+                self.collect_methods(node.children[2], class_name)
             elif node.data == "program":
-                self._find_classes(node)
+                self.collect_classes(node)
 
-    def _find_methods(self, method_node, class_name):
-        current = method_node
-        while current and current.children:
-            selector = self._extract_selector(current.children[0])
-            block_node = current.children[1]
+    def collect_methods(self, method_node, class_name):
+        """Collect all method definitions for a class"""
+        methods = self.extract_methods(method_node)
 
-            if selector in self.all_classes[class_name]["methods"]:
-                print_and_exit("Semantic other error", ERROR_SEMANTIC_OTHER, sys.stderr)
+        for method_data in methods:
+            selector = method_data[0]
+            block_node = method_data[1]
+
+            self.validate_unique_method(class_name, selector)
 
             params = []
             if block_node.children[0].children:
-                params = self._extract_params(block_node.children[0])
+                params = self.parse_parameters(block_node.children[0])
 
-            self.all_classes[class_name]["methods"][selector] = {
+            self.class_registry[class_name]["methods"][selector] = {
                 "arity": len(params),
             }
 
-            if len(current.children) > 2:
-                current = current.children[2]
-            else:
-                break
+    def extract_methods(self, method_node):
+        """Extract method definitions"""
+        methods = []
+        current = method_node
 
-    def _verify_main_class(self):
-        visited = set()
-        for class_name in self.all_classes:
-            self._check_circular_inheritance(class_name, visited, set())
+        while current and current.children:
+            selector_node = current.children[0]
+            block_node = current.children[1]
 
-        if "Main" not in self.all_classes:
+            selector = self.parse_selector(selector_node)
+            methods.append((selector, block_node))
+
+            current = current.children[2] if len(current.children) > 2 else None
+
+        return methods
+
+    def validate_unique_class(self, class_name):
+        """Verify class is not already defined"""
+        if class_name in self.class_registry:
+            print_and_exit("Semantic other error", ERROR_SEMANTIC_OTHER, sys.stderr)
+
+    def validate_unique_method(self, class_name, selector):
+        """Verify class method is not already defined"""
+        if selector in self.class_registry[class_name]["methods"]:
+            print_and_exit("Semantic other error", ERROR_SEMANTIC_OTHER, sys.stderr)
+
+    def validate_main_class(self):
+        """Verify Main class exists, has run method and does not have inheritance cycle"""
+        self.check_inheritance_cycles()
+        self.validate_main_class_exists()
+        self.validate_main_run_method()
+
+    def validate_main_class_exists(self):
+        """Verify Main class is defined"""
+        if "Main" not in self.class_registry:
             print_and_exit("Semantic main error", ERROR_SEMANTIC_MAIN, sys.stderr)
 
-        if "run" not in self.all_classes["Main"]["methods"]:
+    def validate_main_run_method(self):
+        """Verify Main class has run method with arity 0"""
+        if "run" not in self.class_registry["Main"]["methods"]:
             print_and_exit("Semantic main error", ERROR_SEMANTIC_MAIN, sys.stderr)
 
-        if self.all_classes["Main"]["methods"]["run"]["arity"] > 0:
+        if self.class_registry["Main"]["methods"]["run"]["arity"] > 0:
             print_and_exit("Semantic arity error", ERROR_SEMANTIC_ARITY, sys.stderr)
 
-    def _check_circular_inheritance(self, class_name, visited, path):
+    def validate_parent_class(self, parent_name):
+        """Verify parent class exists"""
+        if parent_name not in self.class_registry and parent_name not in VALID_CIDS:
+            print_and_exit(
+                "Semantic undefined error", ERROR_SEMANTIC_UNDEFINED, sys.stderr
+            )
+
+    def validate_not_reserved(self, word):
+        """Verify word is not a reserved keyword"""
+        if word in RESERVED_WORDS:
+            print_and_exit("Syntax error", ERROR_SYNTAX, sys.stderr)
+
+    def validate_unique_parameter(self, param_name, param_set):
+        """Verify parameter name is not duplicate in current scope"""
+        if param_name in param_set:
+            print_and_exit("Semantic other error", ERROR_SEMANTIC_OTHER, sys.stderr)
+
+    def validate_var_not_parameter(self, var_name):
+        """Verify variable name doesn't have a collision with a parameter"""
+        if var_name in self.scope_variables:
+            if self.scope_variables[var_name] == "parameter":
+                print_and_exit(
+                    "Semantic collision error", ERROR_SEMANTIC_COLLISION, sys.stderr
+                )
+
+    def validate_class_method(self, class_name, selector):
+        """Verify class method exists on class"""
+        if selector == CLASS_METHOD_READ:
+            if not self.check_inheritance(class_name, "String"):
+                print_and_exit(
+                    "Semantic undefined error", ERROR_SEMANTIC_UNDEFINED, sys.stderr
+                )
+        elif selector == CLASS_METHOD_NEW:
+            if class_name not in VALID_CIDS:
+                print_and_exit(
+                    "Semantic undefined error", ERROR_SEMANTIC_UNDEFINED, sys.stderr
+                )
+        else:
+            print_and_exit(
+                "Semantic undefined error", ERROR_SEMANTIC_UNDEFINED, sys.stderr
+            )
+
+    def validate_keyword_class_method(self, class_name, selector):
+        """Verify keyword class method exists on class"""
+        if selector == CLASS_METHOD_FROM + ":":
+            if class_name != "Integer":
+                print_and_exit(
+                    "Semantic undefined error", ERROR_SEMANTIC_UNDEFINED, sys.stderr
+                )
+        else:
+            print_and_exit(
+                "Semantic undefined error", ERROR_SEMANTIC_UNDEFINED, sys.stderr
+            )
+
+    def validate_method_arity(self, send_elem, selector, arg_count):
+        """Verify method call has correct number of arguments"""
+        receiver_elem = send_elem.find("expr/*")
+
+        # Only validate self sends
+        if not self.is_self_reference(receiver_elem):
+            return
+
+        # Check arity when calling method on self
+        if self.current_class:
+            if selector in self.class_registry[self.current_class]["methods"]:
+                expected_arity = self.class_registry[self.current_class]["methods"][
+                    selector
+                ]["arity"]
+                if expected_arity != arg_count:
+                    print_and_exit(
+                        "Semantic arity error", ERROR_SEMANTIC_ARITY, sys.stderr
+                    )
+
+    def validate_token_reference(self, token):
+        """Verify token references valid variable or class"""
+        if token.type == "ID":
+            var_name = token.value
+            if var_name not in RESERVED_WORDS and var_name not in self.scope_variables:
+                print_and_exit(
+                    "Semantic undefined error", ERROR_SEMANTIC_UNDEFINED, sys.stderr
+                )
+        elif token.type == "CID":
+            class_name = token.value
+            if class_name not in self.class_registry and class_name not in VALID_CIDS:
+                print_and_exit(
+                    "Semantic undefined error", ERROR_SEMANTIC_UNDEFINED, sys.stderr
+                )
+
+    def check_inheritance_cycles(self):
+        """Detect cycles in class inheritance"""
+        visited = set()
+        for class_name in self.class_registry:
+            self.detect_inheritance_cycle(class_name, visited, set())
+
+    def detect_inheritance_cycle(self, class_name, visited, path):
+        """Detect circular inheritance (recursive)"""
         if class_name in path:
             print_and_exit("Semantic other error", ERROR_SEMANTIC_OTHER, sys.stderr)
 
-        if class_name in visited:
-            return
-
-        if class_name not in self.all_classes:
+        if class_name in visited or class_name not in self.class_registry:
             return
 
         visited.add(class_name)
-        path.add(class_name)
+        path.add(class_name)    # Add current class to path to detect cycles
 
-        parent = self.all_classes[class_name]["parent"]
-        self._check_circular_inheritance(parent, visited, path)
+        parent = self.class_registry[class_name]["parent"]
+        self.detect_inheritance_cycle(parent, visited, path)
 
-        path.remove(class_name)
+        path.remove(class_name) # Remove from path after checking
 
-    def _get_node_value(self, node):
+    def extract_token_value(self, node):
+        """Get value from token or tree node"""
         if isinstance(node, Token):
             return node.value
         elif (
@@ -184,136 +304,170 @@ class XML:
         else:
             return ""
 
-    def _build_xml_tree(self, node, parent_elem):
+    def process_tree_to_xml(self, node, parent_elem):
+        """Process tree node to XML"""
         if not isinstance(node, Tree):
             return
 
         node_type = node.data
-        handler_name = f"_handle_{node_type}"
+        handler_name = f"process_{node_type}_node"
         handler = getattr(self, handler_name, None)
 
         if handler:
             handler(node, parent_elem)
 
-    def _handle_program(self, node, parent_elem):
+    def process_program_node(self, node, parent_elem):
+        """Process program node to XML"""
         for child in node.children:
-            self._build_xml_tree(child, parent_elem)
+            self.process_tree_to_xml(child, parent_elem)
 
-    def _handle_class(self, node, parent_elem):
-        class_name = self._get_node_value(node.children[0])
-        parent_name = self._get_node_value(node.children[1])
+    def process_class_node(self, node, parent_elem):
+        """Process class node to XML"""
+        class_name = self.extract_token_value(node.children[0])
+        parent_name = self.extract_token_value(node.children[1])
 
-        if parent_name not in self.all_classes and parent_name not in VALID_CIDS:
-            print_and_exit(
-                "Semantic undefined error", ERROR_SEMANTIC_UNDEFINED, sys.stderr
-            )
+        self.validate_parent_class(parent_name)
 
         class_elem = ET.SubElement(
             parent_elem, "class", attrib={"name": class_name, "parent": parent_name}
         )
-        self.active_class = class_name
+        self.current_class = class_name
 
         method_node = node.children[2]
-        self._build_xml_tree(method_node, class_elem)
+        self.process_tree_to_xml(method_node, class_elem)
 
-    def _handle_method(self, node, parent_elem):
+    def process_method_node(self, node, parent_elem):
+        """Process method node to XML"""
         if not node.children:
             return
 
         selector_node = node.children[0]
         block_node = node.children[1]
 
-        selector = self._extract_selector(selector_node)
-        self.active_method = selector
+        selector = self.parse_selector(selector_node)
+        self.current_method = selector
         method_elem = ET.SubElement(
             parent_elem, "method", attrib={"selector": selector}
         )
 
-        self.local_vars = {}
+        # Create a new scope for each method
+        self.scope_variables = {}
+        self.process_tree_to_xml(block_node, method_elem)
 
-        self._build_xml_tree(block_node, method_elem)
-
+        # Process next method if exists
         if len(node.children) > 2:
-            self._build_xml_tree(node.children[2], parent_elem)
+            self.process_tree_to_xml(node.children[2], parent_elem)
 
-    def _extract_selector(self, selector_node):
+    def parse_selector(self, selector_node):
+        """Parse method selector from selector node"""
         if selector_node.data != "selector":
             return ""
 
+        # Simple selector (just an identifier)
         if len(selector_node.children) == 1:
-            selector = self._get_node_value(selector_node.children[0])
-            self._check_reserved_word(selector)
+            selector = self.extract_token_value(selector_node.children[0])
+            self.validate_not_reserved(selector)
             return selector
 
-        selector = ""
+        # Keyword selector (with colons)
+        return self.parse_keyword_selector(selector_node)
+
+    def parse_keyword_selector(self, selector_node):
+        """Parse keyword selector with multiple parts"""
+        selector_parts = []
+
         id_colon = selector_node.children[0]
-        id_part = self._get_node_value(id_colon).rstrip(":")
-        selector = id_part + ":"
+        id_part = self.extract_token_value(id_colon).rstrip(":")
+        selector_parts.append(id_part + ":")
 
         if len(selector_node.children) > 1:
-            selector_tail = selector_node.children[1]
-            while selector_tail.children:
-                id_colon = selector_tail.children[0]
-                id_part = self._get_node_value(id_colon).rstrip(":")
-                selector += id_part + ":"
-                if len(selector_tail.children) > 1:
-                    selector_tail = selector_tail.children[1]
-                else:
-                    break
+            self.collect_selector_tail_parts(selector_node.children[1], selector_parts)
 
-        return selector
+        return "".join(selector_parts)
 
-    def _check_reserved_word(self, word):
-        if word in RESERVED_WORDS:
-            print_and_exit("Syntax error", ERROR_SYNTAX, sys.stderr)
+    def collect_selector_tail_parts(self, selector_tail, parts):
+        """Collect remaining parts of a selector tail"""
+        current = selector_tail
+        while current and current.children:
+            id_colon = current.children[0]
+            id_part = self.extract_token_value(id_colon).rstrip(":")
+            parts.append(id_part + ":")
+            if len(current.children) > 1:
+                current = current.children[1]
+            else:
+                break
 
-    def _handle_block(self, node, parent_elem):
+    def process_block_node(self, node, parent_elem):
+        """Process block node into XML"""
         blockpar_node = node.children[0]
         blockstat_node = node.children[1]
 
-        parent_scope = self.local_vars.copy()
-        self.local_vars = {}
+        # Save parent scope and create a new local scope for the block
+        parent_scope = self.scope_variables.copy()
+        self.scope_variables = {}
 
-        params = self._extract_params(blockpar_node)
+        params = self.parse_parameters(blockpar_node)
         block_elem = ET.SubElement(
             parent_elem, "block", attrib={"arity": str(len(params))}
         )
-
         for param_name in params:
-            self.local_vars[param_name] = "parameter"
+            self.scope_variables[param_name] = "parameter"
 
-        self._add_params_to_xml(block_elem, params)
-        self._process_statements(block_elem, blockstat_node)
-        self.local_vars = parent_scope
+        self.add_parameters_to_xml(block_elem, params)
+        self.process_block_statements(block_elem, blockstat_node)
 
-    def _add_params_to_xml(self, block_elem, params):
+        # Restore parent scope when exiting block
+        self.scope_variables = parent_scope
+
+    def add_parameters_to_xml(self, block_elem, params):
+        """Add parameter elements to XML"""
         for i, param_name in enumerate(params, 1):
-            ET.SubElement(
-                block_elem, "parameter", attrib={"order": str(i), "name": param_name}
+            order = str(i)
+            self.create_xml_element(
+                block_elem, "parameter", {"order": order, "name": param_name}
             )
 
-    def _process_statements(self, block_elem, blockstat_node):
-        statements = self._extract_statements(blockstat_node)
-        for i, (var_name, expr_node) in enumerate(statements, 1):
-            if var_name in self.local_vars and self.local_vars[var_name] == "parameter":
-                print_and_exit(
-                    "Semantic collision error", ERROR_SEMANTIC_COLLISION, sys.stderr
-                )
+    def create_xml_element(self, parent, tag, attributes=None, text=None):
+        """Create XML element with attributes and text"""
+        if attributes is None:
+            attributes = {}
 
-            self.local_vars[var_name] = "variable"
+        elem = ET.SubElement(parent, tag, attrib=attributes)
+        if text:
+            elem.text = text
+        return elem
 
-            assign_elem = ET.SubElement(block_elem, "assign", attrib={"order": str(i)})
-            ET.SubElement(assign_elem, "var", attrib={"name": var_name})
-            expr_elem = ET.SubElement(assign_elem, "expr", attrib={})
-            self._build_xml_tree(expr_node, expr_elem)
+    def process_block_statements(self, block_elem, blockstat_node):
+        """Process block statements to XML"""
+        statements = self.parse_statements(blockstat_node)
 
-    def _extract_statements(self, blockstat_node):
+        for i, statement in enumerate(statements, 1):
+            var_name = statement[0]
+            expr_node = statement[1]
+
+            self.validate_var_not_parameter(var_name)
+            self.scope_variables[var_name] = "variable"
+
+            self.create_assignment_element(block_elem, i, var_name, expr_node)
+
+    def create_assignment_element(self, block_elem, order, var_name, expr_node):
+        """Create assignment XML element"""
+        assign_elem = self.create_xml_element(
+            block_elem, "assign", {"order": str(order)}
+        )
+        self.create_xml_element(assign_elem, "var", {"name": var_name})
+        expr_elem = self.create_xml_element(assign_elem, "expr")
+        self.process_tree_to_xml(expr_node, expr_elem)
+
+    def parse_statements(self, blockstat_node):
+        """Extract statements from block statement node"""
         statements = []
         current = blockstat_node
-        while current.children:
-            if current.data == "blockstat" and current.children:
-                var_name = self._get_node_value(current.children[0])
-                self._check_reserved_word(var_name)
+
+        while current and current.children:
+            if current.data == "blockstat":
+                var_name = self.extract_token_value(current.children[0])
+                self.validate_not_reserved(var_name)
                 expr_node = current.children[1]
                 statements.append((var_name, expr_node))
 
@@ -323,24 +477,21 @@ class XML:
                     break
             else:
                 break
+
         return statements
 
-    def _extract_params(self, blockpar_node):
+    def parse_parameters(self, blockpar_node):
+        """Extract parameters from block parameter node"""
         params = []
-        param_set = set()
+        param_set = set()  # Track parameters to detect duplicates
 
         current = blockpar_node
-        while current.children:
-            if current.data == "blockpar" and current.children:
+        while current and current.children:
+            if current.data == "blockpar":
                 colon_id_node = current.children[0]
-                param_name = self._get_node_value(colon_id_node).lstrip(":")
-                self._check_reserved_word(param_name)
-
-                if param_name in param_set:
-                    print_and_exit(
-                        "Semantic other error", ERROR_SEMANTIC_OTHER, sys.stderr
-                    )
-
+                param_name = self.extract_token_value(colon_id_node).lstrip(":")
+                self.validate_not_reserved(param_name)
+                self.validate_unique_parameter(param_name, param_set)
                 param_set.add(param_name)
                 params.append(param_name)
 
@@ -350,139 +501,133 @@ class XML:
                     break
             else:
                 break
+
         return params
 
-    def _handle_expr(self, node, parent_elem):
+    def process_expr_node(self, node, parent_elem):
+        """Process expression node to XML"""
         exprbase_node = node.children[0]
-        self._build_xml_tree(exprbase_node, parent_elem)
+        self.process_tree_to_xml(exprbase_node, parent_elem)
 
+        # Process message send if exists
         if len(node.children) > 1:
             exprtail_node = node.children[1]
-            if not exprtail_node.children:
-                return
+            self.process_expression_tail(exprtail_node, parent_elem)
 
-            tail_child = exprtail_node.children[0]
+    def process_expression_tail(self, exprtail_node, parent_elem):
+        """Process expression message send"""
+        if not exprtail_node.children:
+            return
 
-            if isinstance(tail_child, Token) and tail_child.type == "ID":
-                self._check_reserved_word(tail_child.value)
-                self._create_simple_send(parent_elem, tail_child.value)
-            elif (
-                isinstance(tail_child, Tree)
-                and tail_child.data == "exprsel"
-                and tail_child.children
-            ):
-                self._create_complex_send(parent_elem, tail_child)
+        tail_child = exprtail_node.children[0]
 
-    def _is_subclass_of(self, class_name, parent_name):
+        # no arguments
+        if isinstance(tail_child, Token) and tail_child.type == "ID":
+            self.validate_not_reserved(tail_child.value)
+            self.create_unary_message(parent_elem, tail_child.value)
+
+        # with arguments
+        elif (
+            isinstance(tail_child, Tree)
+            and tail_child.data == "exprsel"
+            and tail_child.children
+        ):
+            self.create_keyword_message(parent_elem, tail_child)
+
+    def check_inheritance(self, class_name, parent_name):
+        """Check if class inherits from specified parent"""
         if class_name == parent_name:
             return True
 
-        if class_name not in self.all_classes:
+        if class_name not in self.class_registry:
             return False
 
-        current_parent = self.all_classes[class_name]["parent"]
-        return self._is_subclass_of(current_parent, parent_name)
+        current_parent = self.class_registry[class_name]["parent"]
+        return self.check_inheritance(current_parent, parent_name)
 
-    def _create_simple_send(self, parent_elem, selector):
+    def create_unary_message(self, parent_elem, selector):
+        """Create unary message send XML element"""
         receiver_elem = parent_elem.find("*")
-        if (
-            receiver_elem is not None
-            and receiver_elem.tag == "literal"
-            and receiver_elem.get("class") == "class"
-        ):
-            class_name = receiver_elem.get("value")
-            if selector == CLASS_METHOD_READ:
-                if not self._is_subclass_of(class_name, "String"):
-                    print_and_exit(
-                        "Semantic undefined error", ERROR_SEMANTIC_UNDEFINED, sys.stderr
-                    )
-            elif selector == CLASS_METHOD_NEW:
-                if class_name not in VALID_CIDS:
-                    print_and_exit(
-                        "Semantic undefined error", ERROR_SEMANTIC_UNDEFINED, sys.stderr
-                    )
-            else:
-                print_and_exit(
-                    "Semantic undefined error", ERROR_SEMANTIC_UNDEFINED, sys.stderr
-                )
 
-        send_elem = ET.SubElement(parent_elem, "send", attrib={"selector": selector})
-        expr_elem = ET.SubElement(send_elem, "expr", attrib={})
+        if self.is_class_literal(receiver_elem):
+            self.validate_class_method(receiver_elem.get("value"), selector)
 
-        for child in list(parent_elem):
-            if child != send_elem:
-                expr_elem.append(child)
-                parent_elem.remove(child)
+        send_elem = self.create_xml_element(parent_elem, "send", {"selector": selector})
+        expr_elem = self.create_xml_element(send_elem, "expr")
 
-    def _create_complex_send(self, parent_elem, exprsel_node):
+        self.move_children_to_element(parent_elem, send_elem, expr_elem)
+
+    def is_class_literal(self, elem):
+        """Check if element is a class literal"""
+        if elem is None:
+            return False
+
+        if elem.tag != "literal":
+            return False
+
+        if elem.get("class") != "class":
+            return False
+
+        return True
+
+    def create_keyword_message(self, parent_elem, exprsel_node):
+        """Create keyword message send XML element"""
         receiver_elem = parent_elem.find("*")
-        selector, args = self._extract_selector_and_args(exprsel_node)
+        selector, args = self.parse_selector_and_args(exprsel_node)
 
-        if (
-            receiver_elem is not None
-            and receiver_elem.tag == "literal"
-            and receiver_elem.get("class") == "class"
-        ):
+        if self.is_class_literal(receiver_elem):
             class_name = receiver_elem.get("value")
-            if selector == CLASS_METHOD_FROM + ":" and class_name != "Integer":
-                print_and_exit(
-                    "Semantic undefined error", ERROR_SEMANTIC_UNDEFINED, sys.stderr
-                )
-            if selector not in [CLASS_METHOD_FROM + ":"]:
-                print_and_exit(
-                    "Semantic undefined error", ERROR_SEMANTIC_UNDEFINED, sys.stderr
-                )
+            self.validate_keyword_class_method(class_name, selector)
 
-        send_elem = ET.SubElement(parent_elem, "send", attrib={"selector": selector})
-        expr_elem = ET.SubElement(send_elem, "expr", attrib={})
+        send_elem = self.create_xml_element(parent_elem, "send", {"selector": selector})
+        expr_elem = self.create_xml_element(send_elem, "expr")
 
-        for child in list(parent_elem):
-            if child != send_elem:
-                expr_elem.append(child)
-                parent_elem.remove(child)
+        self.move_children_to_element(parent_elem, send_elem, expr_elem)
+        self.add_args_to_message(send_elem, args)
+        self.validate_method_arity(send_elem, selector, len(args))
 
-        self._add_args_to_xml(send_elem, args)
-        self._check_self_method_arity(send_elem, selector, len(args))
+    def move_children_to_element(self, source_elem, exclude_elem, target_elem):
+        """Move children from source to target except exclude_elem"""
+        for child in list(source_elem):
+            if child != exclude_elem:
+                target_elem.append(child)
+                source_elem.remove(child)
 
-    def _add_args_to_xml(self, send_elem, args):
+    def add_args_to_message(self, send_elem, args):
+        """Add argument elements to message send"""
         for i, arg_node in enumerate(args, 1):
-            arg_elem = ET.SubElement(send_elem, "arg", attrib={"order": str(i)})
-            expr_elem = ET.SubElement(arg_elem, "expr", attrib={})
-            self._build_xml_tree(arg_node, expr_elem)
+            arg_elem = self.create_xml_element(send_elem, "arg", {"order": str(i)})
+            expr_elem = self.create_xml_element(arg_elem, "expr")
+            self.process_tree_to_xml(arg_node, expr_elem)
 
-    def _check_self_method_arity(self, send_elem, selector, arg_count):
-        receiver_elem = send_elem.find("expr/*")
-        if (
-            receiver_elem is not None
-            and receiver_elem.tag == "var"
-            and receiver_elem.get("name") == "self"
-        ):
-            if (
-                self.active_class
-                and selector in self.all_classes[self.active_class]["methods"]
-            ):
-                expected_arity = self.all_classes[self.active_class]["methods"][
-                    selector
-                ]["arity"]
-                if expected_arity != arg_count:
-                    print_and_exit(
-                        "Semantic arity error", ERROR_SEMANTIC_ARITY, sys.stderr
-                    )
+    def is_self_reference(self, elem):
+        """Check if element is a reference to self"""
+        if elem is None:
+            return False
 
-    def _extract_selector_and_args(self, exprsel_node):
-        selector = ""
+        if elem.tag != "var":
+            return False
+
+        if elem.get("name") != "self":
+            return False
+
+        return True
+
+    def parse_selector_and_args(self, exprsel_node):
+        """Extract selector and arguments from keyword message"""
+        selector_parts = []
         args = []
 
         current = exprsel_node
-        while current.children:
-            if current.data == "exprsel" and current.children:
+        while current and current.children:
+            if current.data == "exprsel":
                 if len(current.children) >= 2:
                     id_colon_node = current.children[0]
                     arg_node = current.children[1]
 
-                    id_part = self._get_node_value(id_colon_node).rstrip(":")
-                    self._check_reserved_word(id_part)
-                    selector += id_part + ":"
+                    id_part = self.extract_token_value(id_colon_node).rstrip(":")
+                    self.validate_not_reserved(id_part)
+                    selector_parts.append(id_part + ":")
                     args.append(arg_node)
 
                     if len(current.children) > 2:
@@ -494,69 +639,61 @@ class XML:
             else:
                 break
 
-        return selector, args
+        return "".join(selector_parts), args
 
-    def _handle_exprbase(self, node, parent_elem):
+    def process_exprbase_node(self, node, parent_elem):
+        """Process exprbase node to XML"""
         base_child = node.children[0]
 
         if isinstance(base_child, Token):
-            if base_child.type == "ID":
-                var_name = base_child.value
-                if var_name not in RESERVED_WORDS and var_name not in self.local_vars:
-                    print_and_exit(
-                        "Semantic undefined error", ERROR_SEMANTIC_UNDEFINED, sys.stderr
-                    )
-            elif base_child.type == "CID":
-                class_name = base_child.value
-                if class_name not in self.all_classes and class_name not in VALID_CIDS:
-                    print_and_exit(
-                        "Semantic undefined error", ERROR_SEMANTIC_UNDEFINED, sys.stderr
-                    )
-
-            self._add_literal_to_xml(parent_elem, base_child)
+            self.validate_token_reference(base_child)
+            self.create_literal_element(parent_elem, base_child)
         else:
-            self._build_xml_tree(base_child, parent_elem)
+            self.process_tree_to_xml(base_child, parent_elem)
 
-    def _add_literal_to_xml(self, parent_elem, token):
+    def create_literal_element(self, parent_elem, token):
+        """Create XML element for a literal value"""
         token_type = token.type
         token_value = token.value
 
         if token_type == "INT":
-            ET.SubElement(
+            self.create_xml_element(
                 parent_elem,
                 "literal",
-                attrib={"class": "Integer", "value": token_value},
+                {"class": "Integer", "value": token_value},
             )
-        elif token_type == "ESCAPED_STRING" or token_type == "SINGLE_STRING":
-            value = token_value[1:-1]
-            ET.SubElement(
-                parent_elem, "literal", attrib={"class": "String", "value": value}
+        elif token_type == "SINGLE_STRING":
+            value = token_value.strip("'")
+            self.create_xml_element(
+                parent_elem, "literal", {"class": "String", "value": value}
             )
         elif token_type == "ID":
-            self._handle_id_token(parent_elem, token_value)
+            self.process_id_token(parent_elem, token_value)
         elif token_type == "CID":
-            ET.SubElement(
-                parent_elem, "literal", attrib={"class": "class", "value": token_value}
+            self.create_xml_element(
+                parent_elem, "literal", {"class": "class", "value": token_value}
             )
 
-    def _handle_id_token(self, parent_elem, token_value):
+    def process_id_token(self, parent_elem, token_value):
+        """Process identifier token to XML"""
         if token_value == "nil":
-            ET.SubElement(
-                parent_elem, "literal", attrib={"class": "Nil", "value": "nil"}
+            self.create_xml_element(
+                parent_elem, "literal", {"class": "Nil", "value": "nil"}
             )
         elif token_value == "true":
-            ET.SubElement(
-                parent_elem, "literal", attrib={"class": "True", "value": "true"}
+            self.create_xml_element(
+                parent_elem, "literal", {"class": "True", "value": "true"}
             )
         elif token_value == "false":
-            ET.SubElement(
-                parent_elem, "literal", attrib={"class": "False", "value": "false"}
+            self.create_xml_element(
+                parent_elem, "literal", {"class": "False", "value": "false"}
             )
         else:
-            ET.SubElement(parent_elem, "var", attrib={"name": token_value})
+            self.create_xml_element(parent_elem, "var", {"name": token_value})
 
 
 def print_and_exit(msg, exit_code, output=sys.stdout):
+    """Print message and exit program with specified code"""
     try:
         print(msg, file=output)
         exit(exit_code)
@@ -565,6 +702,7 @@ def print_and_exit(msg, exit_code, output=sys.stdout):
 
 
 def parse_args():
+    """Parse arguments"""
     if len(sys.argv) == 2:
         if sys.argv[1] == "--help" or sys.argv[1] == "-h":
             print_and_exit(USAGE_TEXT, OK, sys.stdout)
@@ -577,6 +715,7 @@ def parse_args():
 
 
 def validate_string(token):
+    """Validate string token for lexical correctness"""
     value = token.value
     i = 0
     while i < len(value):
@@ -594,6 +733,7 @@ def validate_string(token):
 
 
 def parse_source_code():
+    """Parse SOL25 source code from stdin"""
     source_code = ""
     try:
         source_code = sys.stdin.read()
@@ -612,8 +752,7 @@ def parse_source_code():
             },
         )
         ast = p.parse(source_code)
-
-        xml_tree = XML().build_xml(ast, comments)
+        xml_tree = ASTConverter().generate_xml(ast, comments)
 
         return xml_tree
     except UnexpectedCharacters as e:
@@ -625,6 +764,7 @@ def parse_source_code():
 
 
 def prettify(xml_tree):
+    """Format XML tree with indentations"""
     try:
         rough_string = ET.tostring(xml_tree)
         pretty_string = parseString(rough_string).toprettyxml(
