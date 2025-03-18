@@ -1,5 +1,4 @@
 import sys
-import io
 from xml.dom.minidom import parseString
 import xml.etree.ElementTree as ET
 from lark import Lark, UnexpectedCharacters, UnexpectedToken, Token, Tree
@@ -19,6 +18,10 @@ ERROR_INTERNAL = 99             # Internal error (other)
 
 RESERVED_WORDS = ["class", "self", "super", "nil", "true", "false"]
 VALID_CIDS = ["Object", "Nil", "True", "False", "Integer", "String", "Block"]
+
+CLASS_METHOD_NEW = "new"
+CLASS_METHOD_FROM = "from"
+CLASS_METHOD_READ = "read"
 
 USAGE_TEXT = """
 Usage: python parse.py [-h | --help]
@@ -86,8 +89,7 @@ class XML:
         root = ET.Element("program", language="SOL25")
 
         if comment_list:
-            description = comment_list[0].value.strip('"')
-            description = description.replace("\n", "&nbsp;")
+            description = comment_list[0].value.strip('"').replace("\n", "&nbsp;")
             root.set("description", description)
 
         self._find_classes(parse_tree)
@@ -104,7 +106,7 @@ class XML:
 
                 if class_name in self.all_classes:
                     print_and_exit(
-                        "Semantic collision error", ERROR_SEMANTIC_COLLISION, sys.stderr
+                        "Semantic other error", ERROR_SEMANTIC_OTHER, sys.stderr
                     )
 
                 self.all_classes[class_name] = {
@@ -113,6 +115,8 @@ class XML:
                 }
 
                 self._find_methods(node.children[2], class_name)
+            elif node.data == "program":
+                self._find_classes(node)
 
     def _find_methods(self, method_node, class_name):
         current = method_node
@@ -121,16 +125,13 @@ class XML:
             block_node = current.children[1]
 
             if selector in self.all_classes[class_name]["methods"]:
-                print_and_exit(
-                    "Semantic collision error", ERROR_SEMANTIC_COLLISION, sys.stderr
-                )
+                print_and_exit("Semantic other error", ERROR_SEMANTIC_OTHER, sys.stderr)
 
             params = []
             if block_node.children[0].children:
                 params = self._extract_params(block_node.children[0])
 
             self.all_classes[class_name]["methods"][selector] = {
-                "params": params,
                 "arity": len(params),
             }
 
@@ -140,6 +141,10 @@ class XML:
                 break
 
     def _verify_main_class(self):
+        visited = set()
+        for class_name in self.all_classes:
+            self._check_circular_inheritance(class_name, visited, set())
+
         if "Main" not in self.all_classes:
             print_and_exit("Semantic main error", ERROR_SEMANTIC_MAIN, sys.stderr)
 
@@ -148,6 +153,24 @@ class XML:
 
         if self.all_classes["Main"]["methods"]["run"]["arity"] > 0:
             print_and_exit("Semantic arity error", ERROR_SEMANTIC_ARITY, sys.stderr)
+
+    def _check_circular_inheritance(self, class_name, visited, path):
+        if class_name in path:
+            print_and_exit("Semantic other error", ERROR_SEMANTIC_OTHER, sys.stderr)
+
+        if class_name in visited:
+            return
+
+        if class_name not in self.all_classes:
+            return
+
+        visited.add(class_name)
+        path.add(class_name)
+
+        parent = self.all_classes[class_name]["parent"]
+        self._check_circular_inheritance(parent, visited, path)
+
+        path.remove(class_name)
 
     def _get_node_value(self, node):
         if isinstance(node, Token):
@@ -225,7 +248,6 @@ class XML:
         selector = ""
         id_colon = selector_node.children[0]
         id_part = self._get_node_value(id_colon).rstrip(":")
-        self._check_reserved_word(id_part)
         selector = id_part + ":"
 
         if len(selector_node.children) > 1:
@@ -233,7 +255,6 @@ class XML:
             while selector_tail.children:
                 id_colon = selector_tail.children[0]
                 id_part = self._get_node_value(id_colon).rstrip(":")
-                self._check_reserved_word(id_part)
                 selector += id_part + ":"
                 if len(selector_tail.children) > 1:
                     selector_tail = selector_tail.children[1]
@@ -352,7 +373,39 @@ class XML:
             ):
                 self._create_complex_send(parent_elem, tail_child)
 
+    def _is_subclass_of(self, class_name, parent_name):
+        if class_name == parent_name:
+            return True
+
+        if class_name not in self.all_classes:
+            return False
+
+        current_parent = self.all_classes[class_name]["parent"]
+        return self._is_subclass_of(current_parent, parent_name)
+
     def _create_simple_send(self, parent_elem, selector):
+        receiver_elem = parent_elem.find("*")
+        if (
+            receiver_elem is not None
+            and receiver_elem.tag == "literal"
+            and receiver_elem.get("class") == "class"
+        ):
+            class_name = receiver_elem.get("value")
+            if selector == CLASS_METHOD_READ:
+                if not self._is_subclass_of(class_name, "String"):
+                    print_and_exit(
+                        "Semantic undefined error", ERROR_SEMANTIC_UNDEFINED, sys.stderr
+                    )
+            elif selector == CLASS_METHOD_NEW:
+                if class_name not in VALID_CIDS:
+                    print_and_exit(
+                        "Semantic undefined error", ERROR_SEMANTIC_UNDEFINED, sys.stderr
+                    )
+            else:
+                print_and_exit(
+                    "Semantic undefined error", ERROR_SEMANTIC_UNDEFINED, sys.stderr
+                )
+
         send_elem = ET.SubElement(parent_elem, "send", attrib={"selector": selector})
         expr_elem = ET.SubElement(send_elem, "expr", attrib={})
 
@@ -362,7 +415,23 @@ class XML:
                 parent_elem.remove(child)
 
     def _create_complex_send(self, parent_elem, exprsel_node):
+        receiver_elem = parent_elem.find("*")
         selector, args = self._extract_selector_and_args(exprsel_node)
+
+        if (
+            receiver_elem is not None
+            and receiver_elem.tag == "literal"
+            and receiver_elem.get("class") == "class"
+        ):
+            class_name = receiver_elem.get("value")
+            if selector == CLASS_METHOD_FROM + ":" and class_name != "Integer":
+                print_and_exit(
+                    "Semantic undefined error", ERROR_SEMANTIC_UNDEFINED, sys.stderr
+                )
+            if selector not in [CLASS_METHOD_FROM + ":"]:
+                print_and_exit(
+                    "Semantic undefined error", ERROR_SEMANTIC_UNDEFINED, sys.stderr
+                )
 
         send_elem = ET.SubElement(parent_elem, "send", attrib={"selector": selector})
         expr_elem = ET.SubElement(send_elem, "expr", attrib={})
@@ -507,6 +576,23 @@ def parse_args():
         print_and_exit("Too many arguments", ERROR_SCRIPT_PARAM, sys.stderr)
 
 
+def validate_string(token):
+    value = token.value
+    i = 0
+    while i < len(value):
+        if value[i] == "\n":
+            print_and_exit("Lexical error", ERROR_LEXICAL, sys.stderr)
+        elif value[i] == "\\":
+            if i + 1 >= len(value):
+                print_and_exit("Lexical error", ERROR_LEXICAL, sys.stderr)
+            if value[i + 1] not in ["'", "\\", "n"]:
+                print_and_exit("Lexical error", ERROR_LEXICAL, sys.stderr)
+            i += 2
+        else:
+            i += 1
+    return token
+
+
 def parse_source_code():
     source_code = ""
     try:
@@ -520,7 +606,10 @@ def parse_source_code():
             SOL25_GRAMMAR,
             start="program",
             parser="lalr",
-            lexer_callbacks={"COMMENT": comments.append},
+            lexer_callbacks={
+                "COMMENT": comments.append,
+                "SINGLE_STRING": validate_string,
+            },
         )
         ast = p.parse(source_code)
 
@@ -537,7 +626,7 @@ def parse_source_code():
 
 def prettify(xml_tree):
     try:
-        rough_string = ET.tostring(xml_tree, encoding="UTF-8")
+        rough_string = ET.tostring(xml_tree)
         pretty_string = parseString(rough_string).toprettyxml(
             indent="   ", encoding="UTF-8"
         )
@@ -553,11 +642,9 @@ if __name__ == "__main__":
     pretty_xml_tree = prettify(xml_tree)
 
     try:
-        buffer = io.BytesIO()
         ET.ElementTree(pretty_xml_tree).write(
-            buffer, encoding="UTF-8", xml_declaration=True
+            sys.stdout.buffer, encoding="UTF-8", xml_declaration=True
         )
-        sys.stdout.buffer.write(buffer.getvalue())
         exit(OK)
     except IOError:
         print_and_exit("Can't write to stdout", ERROR_SCRIPT_OUTPUT, sys.stderr)
