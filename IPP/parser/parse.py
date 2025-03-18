@@ -76,81 +76,57 @@ COMMENT: /"[^"]*"/
 %ignore COMMENT
 """
 
-class Validator:
 
+class SOL25BaseClass:
+    """Base class containing common attributes and methods for SOL25 classes"""
 
-class ASTConverter:
-    def __init__(self):
-        self.class_registry = {}
+    def __init__(self, class_registry=None):
+        self.class_registry = class_registry if class_registry is not None else {}
         self.current_class = None
-        self.current_method = None
         self.scope_variables = {}
 
-    def generate_xml(self, parse_tree, comment_list):
-        """Create XML representation of the AST"""
-        root = ET.Element("program", language="SOL25")
+    def update_current_class(self, class_name):
+        """Update current class name"""
+        self.current_class = class_name
 
-        if comment_list:
-            description = comment_list[0].value.strip('"').replace("\n", "&nbsp;")
-            root.set("description", description)
+    def update_scope_variables(self, variables):
+        """Update scope variables"""
+        self.scope_variables = variables
 
-        self.collect_classes(parse_tree)
-        self.validate_main_class()
-        self.process_tree_to_xml(parse_tree, root)
+    # Helper functions
 
-        return root
+    def is_self_reference(self, elem):
+        """Check if element is a reference to self"""
+        if elem is None:
+            return False
 
-    def collect_classes(self, program_node):
-        """Collect all class definitions"""
-        for node in program_node.children:
-            if node.data == "class":
-                class_name = self.extract_token_value(node.children[0])
-                parent_name = self.extract_token_value(node.children[1])
+        if elem.tag != "var":
+            return False
 
-                self.validate_unique_class(class_name)
+        if elem.get("name") != "self":
+            return False
 
-                self.class_registry[class_name] = {
-                    "parent": parent_name,
-                    "methods": {},
-                }
+        return True
 
-                self.collect_methods(node.children[2], class_name)
-            elif node.data == "program":
-                self.collect_classes(node)
+    def is_class_literal(self, elem):
+        """Check if element is a class literal"""
+        if elem is None:
+            return False
 
-    def collect_methods(self, method_node, class_name):
-        """Collect all method definitions for a class"""
-        methods = self.extract_methods(method_node)
+        if elem.tag != "literal":
+            return False
 
-        for method_data in methods:
-            selector = method_data[0]
-            block_node = method_data[1]
+        if elem.get("class") != "class":
+            return False
 
-            self.validate_unique_method(class_name, selector)
+        return True
 
-            params = []
-            if block_node.children[0].children:
-                params = self.parse_parameters(block_node.children[0])
 
-            self.class_registry[class_name]["methods"][selector] = {
-                "arity": len(params),
-            }
+class Validator(SOL25BaseClass):
+    """Validator class"""
 
-    def extract_methods(self, method_node):
-        """Extract method definitions"""
-        methods = []
-        current = method_node
-
-        while current and current.children:
-            selector_node = current.children[0]
-            block_node = current.children[1]
-
-            selector = self.parse_selector(selector_node)
-            methods.append((selector, block_node))
-
-            current = current.children[2] if len(current.children) > 2 else None
-
-        return methods
+    def __init__(self, class_registry):
+        super().__init__(class_registry)
 
     def validate_unique_class(self, class_name):
         """Verify class is not already defined"""
@@ -161,12 +137,6 @@ class ASTConverter:
         """Verify class method is not already defined"""
         if selector in self.class_registry[class_name]["methods"]:
             print_and_exit("Semantic other error", ERROR_SEMANTIC_OTHER, sys.stderr)
-
-    def validate_main_class(self):
-        """Verify Main class exists, has run method and does not have inheritance cycle"""
-        self.check_inheritance_cycles()
-        self.validate_main_class_exists()
-        self.validate_main_run_method()
 
     def validate_main_class_exists(self):
         """Verify Main class is defined"""
@@ -188,11 +158,6 @@ class ASTConverter:
                 "Semantic undefined error", ERROR_SEMANTIC_UNDEFINED, sys.stderr
             )
 
-    def validate_not_reserved(self, word):
-        """Verify word is not a reserved keyword"""
-        if word in RESERVED_WORDS:
-            print_and_exit("Syntax error", ERROR_SYNTAX, sys.stderr)
-
     def validate_unique_parameter(self, param_name, param_set):
         """Verify parameter name is not duplicate in current scope"""
         if param_name in param_set:
@@ -209,7 +174,7 @@ class ASTConverter:
     def validate_class_method(self, class_name, selector):
         """Verify class method exists on class"""
         if selector == CLASS_METHOD_READ:
-            if not self.check_inheritance(class_name, "String"):
+            if not self._check_inheritance(class_name, "String"):
                 print_and_exit(
                     "Semantic undefined error", ERROR_SEMANTIC_UNDEFINED, sys.stderr
                 )
@@ -269,13 +234,20 @@ class ASTConverter:
                     "Semantic undefined error", ERROR_SEMANTIC_UNDEFINED, sys.stderr
                 )
 
-    def check_inheritance_cycles(self):
+    def validate_not_reserved(self, word):
+        """Verify word is not a reserved keyword"""
+        if word in RESERVED_WORDS:
+            print_and_exit("Syntax error", ERROR_SYNTAX, sys.stderr)
+
+    def validate_inheritance_cycles(self):
         """Detect cycles in class inheritance"""
         visited = set()
         for class_name in self.class_registry:
-            self.detect_inheritance_cycle(class_name, visited, set())
+            self._detect_inheritance_cycle(class_name, visited, set())
 
-    def detect_inheritance_cycle(self, class_name, visited, path):
+    # Helper functions
+
+    def _detect_inheritance_cycle(self, class_name, visited, path):
         """Detect circular inheritance (recursive)"""
         if class_name in path:
             print_and_exit("Semantic other error", ERROR_SEMANTIC_OTHER, sys.stderr)
@@ -284,12 +256,100 @@ class ASTConverter:
             return
 
         visited.add(class_name)
-        path.add(class_name)    # Add current class to path to detect cycles
+        path.add(class_name)  # Add current class to path to detect cycles
 
         parent = self.class_registry[class_name]["parent"]
-        self.detect_inheritance_cycle(parent, visited, path)
+        self._detect_inheritance_cycle(parent, visited, path)
 
-        path.remove(class_name) # Remove from path after checking
+        path.remove(class_name)  # Remove from path after checking
+
+    def _check_inheritance(self, class_name, parent_name):
+        """Check if class inherits from specified parent"""
+        if class_name == parent_name:
+            return True
+
+        if class_name not in self.class_registry:
+            return False
+
+        current_parent = self.class_registry[class_name]["parent"]
+        return self._check_inheritance(current_parent, parent_name)
+
+
+class ASTConverter(SOL25BaseClass):
+    "Class that takes AST and makes an XML representation of it"
+
+    def __init__(self):
+        super().__init__()
+        self.current_method = None
+        self.validator = Validator(self.class_registry)
+
+    def generate_xml(self, parse_tree, comment_list):
+        """Create XML representation of the AST"""
+        root = ET.Element("program", language="SOL25")
+
+        if comment_list:
+            description = comment_list[0].value.strip('"').replace("\n", "&nbsp;")
+            root.set("description", description)
+
+        self.collect_classes(parse_tree)
+        self.validator.validate_inheritance_cycles()
+        self.validator.validate_main_class_exists()
+        self.validator.validate_main_run_method()
+        self.process_tree_to_xml(parse_tree, root)
+
+        return root
+
+    def collect_classes(self, program_node):
+        """Collect all class definitions"""
+        for node in program_node.children:
+            if node.data == "class":
+                class_name = self.extract_token_value(node.children[0])
+                parent_name = self.extract_token_value(node.children[1])
+
+                self.validator.validate_unique_class(class_name)
+
+                self.class_registry[class_name] = {
+                    "parent": parent_name,
+                    "methods": {},
+                }
+
+                self.collect_methods(node.children[2], class_name)
+            elif node.data == "program":
+                self.collect_classes(node)
+
+    def collect_methods(self, method_node, class_name):
+        """Collect all method definitions for a class"""
+        methods = self.extract_methods(method_node)
+
+        for method_data in methods:
+            selector = method_data[0]
+            block_node = method_data[1]
+
+            self.validator.validate_unique_method(class_name, selector)
+
+            params = []
+            if block_node.children[0].children:
+                params = self.parse_parameters(block_node.children[0])
+
+            self.class_registry[class_name]["methods"][selector] = {
+                "arity": len(params),
+            }
+
+    def extract_methods(self, method_node):
+        """Extract method definitions"""
+        methods = []
+        current = method_node
+
+        while current and current.children:
+            selector_node = current.children[0]
+            block_node = current.children[1]
+
+            selector = self.parse_selector(selector_node)
+            methods.append((selector, block_node))
+
+            current = current.children[2] if len(current.children) > 2 else None
+
+        return methods
 
     def extract_token_value(self, node):
         """Get value from token or tree node"""
@@ -326,12 +386,13 @@ class ASTConverter:
         class_name = self.extract_token_value(node.children[0])
         parent_name = self.extract_token_value(node.children[1])
 
-        self.validate_parent_class(parent_name)
+        self.validator.validate_parent_class(parent_name)
 
         class_elem = ET.SubElement(
             parent_elem, "class", attrib={"name": class_name, "parent": parent_name}
         )
         self.current_class = class_name
+        self.validator.update_current_class(class_name)
 
         method_node = node.children[2]
         self.process_tree_to_xml(method_node, class_elem)
@@ -352,6 +413,7 @@ class ASTConverter:
 
         # Create a new scope for each method
         self.scope_variables = {}
+        self.validator.update_scope_variables(self.scope_variables)
         self.process_tree_to_xml(block_node, method_elem)
 
         # Process next method if exists
@@ -366,7 +428,7 @@ class ASTConverter:
         # Simple selector (just an identifier)
         if len(selector_node.children) == 1:
             selector = self.extract_token_value(selector_node.children[0])
-            self.validate_not_reserved(selector)
+            self.validator.validate_not_reserved(selector)
             return selector
 
         # Keyword selector (with colons)
@@ -405,6 +467,7 @@ class ASTConverter:
         # Save parent scope and create a new local scope for the block
         parent_scope = self.scope_variables.copy()
         self.scope_variables = {}
+        self.validator.update_scope_variables(self.scope_variables)
 
         params = self.parse_parameters(blockpar_node)
         block_elem = ET.SubElement(
@@ -412,12 +475,14 @@ class ASTConverter:
         )
         for param_name in params:
             self.scope_variables[param_name] = "parameter"
+        self.validator.update_scope_variables(self.scope_variables)
 
         self.add_parameters_to_xml(block_elem, params)
         self.process_block_statements(block_elem, blockstat_node)
 
         # Restore parent scope when exiting block
         self.scope_variables = parent_scope
+        self.validator.update_scope_variables(self.scope_variables)
 
     def add_parameters_to_xml(self, block_elem, params):
         """Add parameter elements to XML"""
@@ -445,8 +510,9 @@ class ASTConverter:
             var_name = statement[0]
             expr_node = statement[1]
 
-            self.validate_var_not_parameter(var_name)
+            self.validator.validate_var_not_parameter(var_name)
             self.scope_variables[var_name] = "variable"
+            self.validator.update_scope_variables(self.scope_variables)
 
             self.create_assignment_element(block_elem, i, var_name, expr_node)
 
@@ -467,7 +533,7 @@ class ASTConverter:
         while current and current.children:
             if current.data == "blockstat":
                 var_name = self.extract_token_value(current.children[0])
-                self.validate_not_reserved(var_name)
+                self.validator.validate_not_reserved(var_name)
                 expr_node = current.children[1]
                 statements.append((var_name, expr_node))
 
@@ -490,8 +556,8 @@ class ASTConverter:
             if current.data == "blockpar":
                 colon_id_node = current.children[0]
                 param_name = self.extract_token_value(colon_id_node).lstrip(":")
-                self.validate_not_reserved(param_name)
-                self.validate_unique_parameter(param_name, param_set)
+                self.validator.validate_not_reserved(param_name)
+                self.validator.validate_unique_parameter(param_name, param_set)
                 param_set.add(param_name)
                 params.append(param_name)
 
@@ -523,7 +589,7 @@ class ASTConverter:
 
         # no arguments
         if isinstance(tail_child, Token) and tail_child.type == "ID":
-            self.validate_not_reserved(tail_child.value)
+            self.validator.validate_not_reserved(tail_child.value)
             self.create_unary_message(parent_elem, tail_child.value)
 
         # with arguments
@@ -534,57 +600,34 @@ class ASTConverter:
         ):
             self.create_keyword_message(parent_elem, tail_child)
 
-    def check_inheritance(self, class_name, parent_name):
-        """Check if class inherits from specified parent"""
-        if class_name == parent_name:
-            return True
-
-        if class_name not in self.class_registry:
-            return False
-
-        current_parent = self.class_registry[class_name]["parent"]
-        return self.check_inheritance(current_parent, parent_name)
-
     def create_unary_message(self, parent_elem, selector):
         """Create unary message send XML element"""
         receiver_elem = parent_elem.find("*")
 
-        if self.is_class_literal(receiver_elem):
-            self.validate_class_method(receiver_elem.get("value"), selector)
+        if self.validator.is_class_literal(receiver_elem):
+            self.validator.validate_class_method(receiver_elem.get("value"), selector)
 
         send_elem = self.create_xml_element(parent_elem, "send", {"selector": selector})
         expr_elem = self.create_xml_element(send_elem, "expr")
 
         self.move_children_to_element(parent_elem, send_elem, expr_elem)
-
-    def is_class_literal(self, elem):
-        """Check if element is a class literal"""
-        if elem is None:
-            return False
-
-        if elem.tag != "literal":
-            return False
-
-        if elem.get("class") != "class":
-            return False
-
-        return True
 
     def create_keyword_message(self, parent_elem, exprsel_node):
         """Create keyword message send XML element"""
         receiver_elem = parent_elem.find("*")
         selector, args = self.parse_selector_and_args(exprsel_node)
 
-        if self.is_class_literal(receiver_elem):
+        if self.validator.is_class_literal(receiver_elem):
             class_name = receiver_elem.get("value")
-            self.validate_keyword_class_method(class_name, selector)
+            # Check "from:"
+            self.validator.validate_keyword_class_method(class_name, selector)
 
         send_elem = self.create_xml_element(parent_elem, "send", {"selector": selector})
         expr_elem = self.create_xml_element(send_elem, "expr")
 
         self.move_children_to_element(parent_elem, send_elem, expr_elem)
         self.add_args_to_message(send_elem, args)
-        self.validate_method_arity(send_elem, selector, len(args))
+        self.validator.validate_method_arity(send_elem, selector, len(args))
 
     def move_children_to_element(self, source_elem, exclude_elem, target_elem):
         """Move children from source to target except exclude_elem"""
@@ -600,19 +643,6 @@ class ASTConverter:
             expr_elem = self.create_xml_element(arg_elem, "expr")
             self.process_tree_to_xml(arg_node, expr_elem)
 
-    def is_self_reference(self, elem):
-        """Check if element is a reference to self"""
-        if elem is None:
-            return False
-
-        if elem.tag != "var":
-            return False
-
-        if elem.get("name") != "self":
-            return False
-
-        return True
-
     def parse_selector_and_args(self, exprsel_node):
         """Extract selector and arguments from keyword message"""
         selector_parts = []
@@ -626,7 +656,7 @@ class ASTConverter:
                     arg_node = current.children[1]
 
                     id_part = self.extract_token_value(id_colon_node).rstrip(":")
-                    self.validate_not_reserved(id_part)
+                    self.validator.validate_not_reserved(id_part)
                     selector_parts.append(id_part + ":")
                     args.append(arg_node)
 
@@ -646,7 +676,7 @@ class ASTConverter:
         base_child = node.children[0]
 
         if isinstance(base_child, Token):
-            self.validate_token_reference(base_child)
+            self.validator.validate_token_reference(base_child)
             self.create_literal_element(parent_elem, base_child)
         else:
             self.process_tree_to_xml(base_child, parent_elem)
