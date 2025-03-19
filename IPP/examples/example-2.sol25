@@ -1,0 +1,7 @@
+class Str : String {}
+class Main : Object {
+    run [|
+        x := Str2 read.  
+    ]
+}
+class Str2 : Str {}
