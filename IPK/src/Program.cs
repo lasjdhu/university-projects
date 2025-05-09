@@ -3,6 +3,9 @@
  * Handles client initialization, command processing, and connection management
  *
  * @author: Dmitrii Ivanushkin (xivanu00)
+ *
+ * PATCH details: I basically misunderstood the spec advice to use Microsoft logger for tracing and used it
+ * for terminal output. I changed every occurence of logger.Log[Information|Error] to a simple Console.WriteLine
  */
 
 using Microsoft.Extensions.DependencyInjection;
@@ -51,14 +54,14 @@ public static class Program {
     };
 
     if (client == null) {
-      logger.LogError("Invalid transport type. See help");
+      Console.WriteLine("ERROR: Invalid transport type. See help");
       cliHandler.DisplayHelp();
       Environment.Exit(1);
     }
 
     Console.CancelKeyPress += async (sender, e) => {
       e.Cancel = true;
-      logger.LogInformation("Shutting down by key press...");
+      Console.WriteLine("Shutting down by key press...");
       await HandleShutdown(client, logger);
       Environment.Exit(0);
     };
@@ -66,7 +69,7 @@ public static class Program {
     try {
       await client.Run();
     } catch (Exception ex) {
-      logger.LogError("Failed to initialize client: {Message}", ex.Message);
+      Console.WriteLine("ERROR: Failed to initialize client: {0}", ex.Message);
       Environment.Exit(1);
     }
 
@@ -96,7 +99,7 @@ public static class Program {
         }
       }
     } catch (Exception ex) {
-      logger.LogError(ex.Message);
+      Console.WriteLine("ERROR: {0}", ex.Message);
     }
   }
 
@@ -135,7 +138,7 @@ public static class Program {
       break;
 
     default:
-      logger.LogError("Unknown command: {Command}", arguments[0]);
+      Console.WriteLine("ERROR: Unknown command: {0}", arguments[0]);
       client.Help();
       break;
     }
@@ -151,7 +154,7 @@ public static class Program {
     try {
       await client.CloseConnection();
     } catch (Exception e) {
-      logger.LogError("Error during shutdown: {Message}", e.Message);
+      Console.WriteLine("ERROR: Error during shutdown: {0}", e.Message);
       Environment.Exit(1);
     }
   }
@@ -165,7 +168,7 @@ public static class Program {
    */
   private static bool CheckArgsNumber(string[] arguments, int expectedNumber, ILogger < IClient > logger) {
     if (arguments.Length != expectedNumber) {
-      logger.LogError("Invalid number of arguments for {Command}. Expected {Expected}, got {Actual}",
+      Console.WriteLine("ERROR: Invalid number of arguments for {0}. Expected {1}, got {2}",
         arguments[0], expectedNumber, arguments.Length);
       return false;
     }

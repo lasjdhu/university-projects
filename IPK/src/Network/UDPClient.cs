@@ -40,10 +40,10 @@ public class UDPClient: ClientBase {
       _client = new UdpClient();
       _client.Client.Bind(new IPEndPoint(IPAddress.Any, 0));
       IsConnected = true;
-      _logger.LogInformation("[UDP] Connected to {Server}:{Port}", _server, _port);
+      Console.WriteLine("[UDP] Connected to {0}:{1}", _server, _port);
       _ = Task.Run(ReceiveLoop);
     } catch (Exception ex) {
-      _logger.LogError("[UDP] Connection error: {Message}", ex.Message);
+      Console.WriteLine("ERROR: Connection error: {0}", ex.Message);
       await CloseConnection();
     }
   }
@@ -58,7 +58,7 @@ public class UDPClient: ClientBase {
         var result = await _client.ReceiveAsync();
         await ProcessReceivedMessage(result.Buffer, result.RemoteEndPoint);
       } catch (Exception ex) {
-        _logger.LogError("[UDP] Error in receive loop: {Message}", ex.Message);
+        Console.WriteLine("ERROR: Error in receive loop: {0}", ex.Message);
         if (_client?.Client?.Connected == false) break;
       }
     }
@@ -78,7 +78,7 @@ public class UDPClient: ClientBase {
 
     if (_dynamicEndPoint == null && messageType == UDPMessageHandler.MSG_TYPE_REPLY) {
       _dynamicEndPoint = remoteEndPoint;
-      _logger.LogInformation("[UDP] Server assigned dynamic port: {Port}", remoteEndPoint.Port);
+      Console.WriteLine("[UDP] Server assigned dynamic port: {0}", remoteEndPoint.Port);
     }
 
     // handle duplicate messages
@@ -86,7 +86,7 @@ public class UDPClient: ClientBase {
       if (IsConnected && messageType != UDPMessageHandler.MSG_TYPE_CONFIRM) {
         await SendConfirmation(messageId);
       }
-      _logger.LogInformation("[UDP] Skipping duplicate message {MessageId}", messageId);
+      Console.WriteLine("[UDP] Skipping duplicate message {0}", messageId);
       return;
     }
 
@@ -102,7 +102,7 @@ public class UDPClient: ClientBase {
           var tcs)) {
         tcs.TrySetResult(true);
       }
-      _logger.LogInformation("[UDP] Received confirmation for message {MessageId}", messageId);
+      Console.WriteLine("[UDP] Received confirmation for message {0}", messageId);
       break;
 
     case UDPMessageHandler.MSG_TYPE_REPLY:
@@ -111,14 +111,14 @@ public class UDPClient: ClientBase {
         data[5], data[4]
       }, 0);
       string message = UDPMessageHandler.ExtractNullTerminatedString(data, 6);
-      _logger.LogInformation("[UDP] Received REPLY (ref: {RefMessageId}) - {Status}: {Message}",
+      Console.WriteLine("[UDP] Received REPLY (ref: {0}) - {1}: {2}",
         refMessageId,
         result == 1 ? "Success" : "Failure",
         message);
       break;
 
     default:
-      _logger.LogError("[UDP] Received unsupported message type: {Type}", messageType);
+      Console.WriteLine("ERROR: Received unsupported message type: {0}", messageType);
       break;
     }
   }
@@ -128,7 +128,7 @@ public class UDPClient: ClientBase {
    */
   protected override async Task SendAuthMessage(string username, string secret, string displayName) {
     byte[] message = UDPMessageHandler.FormatAuthMessage(_nextMessageId, username, displayName, secret);
-    _logger.LogInformation("[UDP] Sending auth message {MessageId}", _nextMessageId);
+    Console.WriteLine("[UDP] Sending auth message {0}", _nextMessageId);
     await SendMessage(message);
   }
 
@@ -136,7 +136,7 @@ public class UDPClient: ClientBase {
    * Join command not implemented in UDP protocol
    */
   protected override Task SendJoinMessage(string channelId) {
-    _logger.LogWarning("[UDP] JOIN command is not implemented");
+    Console.WriteLine("[UDP] JOIN command is not implemented");
     return Task.CompletedTask;
   }
 
@@ -144,7 +144,7 @@ public class UDPClient: ClientBase {
    * Chat message not implemented in UDP protocol
    */
   protected override Task SendChatMessage(string message) {
-    _logger.LogWarning("[UDP] MSG command is not implemented");
+    Console.WriteLine("[UDP] MSG command is not implemented");
     return Task.CompletedTask;
   }
 
@@ -157,7 +157,7 @@ public class UDPClient: ClientBase {
     IsConnected = false;
     _client?.Close();
     _client = null;
-    _logger.LogInformation("[UDP] Connection closed.");
+    Console.WriteLine("[UDP] Connection closed.");
     return Task.CompletedTask;
   }
 
@@ -168,7 +168,7 @@ public class UDPClient: ClientBase {
    */
   private async Task SendMessage(byte[] message) {
     if (_client == null || (_remoteEndPoint == null && _dynamicEndPoint == null)) {
-      _logger.LogError("ERROR: Client not initialized");
+      Console.WriteLine("ERROR: Client not initialized");
       return;
     }
 
@@ -183,7 +183,7 @@ public class UDPClient: ClientBase {
     for (int attempt = 0; attempt <= _retryCount; attempt++) {
       try {
         await _client.SendAsync(message, message.Length, endpoint);
-        _logger.LogInformation("[UDP] Sent message {MessageId}, attempt {Attempt}", currentMessageId, attempt + 1);
+        Console.WriteLine("[UDP] Sent message {0}, attempt {1}", currentMessageId, attempt + 1);
 
         try {
           // wait for confirmation with timeout
@@ -192,14 +192,14 @@ public class UDPClient: ClientBase {
             confirmed = true;
             break;
           }
-          _logger.LogWarning("[UDP] Message {MessageId} confirmation timeout, attempt {Attempt}/{Retries}",
+          Console.WriteLine("[UDP] Message {0} confirmation timeout, attempt {1}/{2}",
             currentMessageId, attempt + 1, _retryCount);
         } catch (Exception) {
-          _logger.LogError("[UDP] Message {MessageId} confirmation timeout, attempt {Attempt}/{Retries}",
+          Console.WriteLine("[UDP] Message {0} confirmation timeout, attempt {1}/{2}",
             currentMessageId, attempt + 1, _retryCount);
         }
       } catch (Exception ex) {
-        _logger.LogError("[UDP] Failed to send message: {Message}", ex.Message);
+        Console.WriteLine("ERROR: Failed to send message: {0}", ex.Message);
       }
     }
 
@@ -207,7 +207,7 @@ public class UDPClient: ClientBase {
 
     // handle message failure after all retries
     if (!confirmed) {
-      _logger.LogError("[UDP] Message {MessageId} failed after {Retries} retries", currentMessageId, _retryCount);
+      Console.WriteLine("[UDP] Message {0} failed after {1} retries", currentMessageId, _retryCount);
       await CloseConnection();
       return;
     }
@@ -223,7 +223,7 @@ public class UDPClient: ClientBase {
   private async Task SendConfirmation(ushort messageIdToConfirm) {
     if (_client == null) return;
     byte[] confirmData = UDPMessageHandler.FormatConfirmation(messageIdToConfirm, messageIdToConfirm);
-    _logger.LogInformation("[UDP] Sending confirmation for message {MessageId}", messageIdToConfirm);
+    Console.WriteLine("[UDP] Sending confirmation for message {0}", messageIdToConfirm);
     await _client.SendAsync(confirmData, confirmData.Length, _dynamicEndPoint ?? _remoteEndPoint!);
   }
 }

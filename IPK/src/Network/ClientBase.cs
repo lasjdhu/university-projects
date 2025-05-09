@@ -106,7 +106,7 @@ public abstract class ClientBase: IClient {
    */
   public virtual Task Rename(string displayName) {
     DisplayName = displayName;
-    _logger.LogInformation("Display name changed to: {DisplayName}", displayName);
+    Console.WriteLine("Display name changed to: {0}", displayName);
     return Task.CompletedTask;
   }
 
@@ -117,7 +117,7 @@ public abstract class ClientBase: IClient {
    */
   public virtual async Task Send(string message) {
     if (string.IsNullOrEmpty(DisplayName)) {
-      _logger.LogError("ERROR: You are not authenticated");
+      Console.WriteLine("ERROR: You are not authenticated");
       return;
     }
 

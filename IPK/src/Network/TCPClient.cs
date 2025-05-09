@@ -43,12 +43,12 @@ public class TCPClient: ClientBase {
       };
 
       IsConnected = true;
-      _logger.LogInformation("[TCP] Connected to {Server}:{Port}", _server, _port);
+      Console.WriteLine("[TCP] Connected to {0}:{1}", _server, _port);
 
       // start receiving messages in background
       _ = Task.Run(ReceiveLoop);
     } catch (Exception e) {
-      _logger.LogError("[TCP] Connection error: {Message}", e.Message);
+      Console.WriteLine("ERROR: Connection error: {0}", e.Message);
       await CloseConnection();
     }
   }
@@ -68,7 +68,7 @@ public class TCPClient: ClientBase {
       }
     } catch (OperationCanceledException) {} catch (Exception ex) {
       if (IsConnected) {
-        _logger.LogError("[TCP] Error in receive loop: {Message}", ex.Message);
+        Console.WriteLine("ERROR: Error in receive loop: {0}", ex.Message);
         await CloseConnection();
       }
     }
@@ -86,31 +86,31 @@ public class TCPClient: ClientBase {
       switch (type) {
       case "REPLY":
         if (sender == "OK") {
-          _logger.LogInformation("Action Success: {Message}", content);
+          Console.WriteLine("Action Success: {0}", content);
         } else if (sender == "NOK") {
-          _logger.LogInformation("Action Failure: {Message}", content);
+          Console.WriteLine("Action Failure: {0}", content);
         } else {
-          _logger.LogError("ERROR: Malformed REPLY message");
+          Console.WriteLine("ERROR: Malformed REPLY message");
           await CloseConnection();
         }
         break;
 
       case "MSG":
-        _logger.LogInformation("{Sender}: {Content}", sender, content);
+        Console.WriteLine("{0}: {1}", sender, content);
         break;
 
       case "ERR":
-        _logger.LogError("ERROR FROM {Sender}: {Message}", sender, content);
+        Console.WriteLine("ERROR FROM {0}: {1}", sender, content);
         await CloseConnection();
         break;
 
       case "BYE":
-        _logger.LogInformation("[TCP] Received BYE from {Sender}", sender);
+        Console.WriteLine("[TCP] Received BYE from {0}", sender);
         await CloseConnection();
         break;
       }
     } catch (Exception ex) {
-      _logger.LogError("ERROR: {Message}", ex.Message);
+      Console.WriteLine("ERROR: {0}", ex.Message);
       await SendErrorMessage($"Failed to process message: {ex.Message}");
       await CloseConnection();
     }
@@ -152,7 +152,7 @@ public class TCPClient: ClientBase {
         await SendMessage(message);
       }
     } catch (Exception ex) {
-      _logger.LogError("[TCP] Error during connection close: {Message}", ex.Message);
+      Console.WriteLine("ERROR: Error during connection close: {0}", ex.Message);
     } finally {
       IsConnected = false;
       _cts.Cancel();
@@ -167,7 +167,7 @@ public class TCPClient: ClientBase {
       _stream = null;
       _client = null;
 
-      _logger.LogInformation("[TCP] Connection closed.");
+      Console.WriteLine("[TCP] Connection closed.");
     }
   }
 
@@ -178,16 +178,16 @@ public class TCPClient: ClientBase {
    */
   private async Task SendMessage(string message) {
     if (_writer == null || !IsConnected) {
-      _logger.LogError("ERROR: Client not initialized");
+      Console.WriteLine("ERROR: Client not initialized");
       return;
     }
 
     try {
       await _writer.WriteAsync(message);
       await _writer.FlushAsync();
-      _logger.LogInformation("[TCP] Sent message: {Message}", message);
+      Console.WriteLine("[TCP] Sent message: {0}", message);
     } catch (Exception ex) {
-      _logger.LogError("ERROR: Failed to send message: {Message}", ex.Message);
+      Console.WriteLine("ERROR: Failed to send message: {0}", ex.Message);
       await CloseConnection();
     }
   }
@@ -207,7 +207,7 @@ public class TCPClient: ClientBase {
       await _writer.WriteAsync(message);
       await _writer.FlushAsync();
     } catch (Exception ex) {
-      _logger.LogError("ERROR: Failed to send error message: {Message}", ex.Message);
+      Console.WriteLine("ERROR: Failed to send error message: {0}", ex.Message);
     }
   }
 }
