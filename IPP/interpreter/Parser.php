@@ -1,7 +1,7 @@
 <?php
 
 /**
- * IPP - Parser
+ * IPP - XML Parser
  * @author Dmitrii Ivanushkin (xivanu00)
  */
 

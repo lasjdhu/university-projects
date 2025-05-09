@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * IPP - Type converter
+ * @author Dmitrii Ivanushkin (xivanu00)
+ */
+
 namespace IPP\Student\Environment;
 
 use IPP\Core\ReturnCode;
@@ -18,7 +23,6 @@ class TypeConverter
 
     /**
      * @param mixed $value
-     * @return ObjectI
      */
     public function toObject($value): ObjectI
     {
@@ -48,20 +52,19 @@ class TypeConverter
             return $instance;
         }
 
-        $this->program->stderr->writeString("Type error: Cannot convert " . gettype($value) . " to object");
+        $this->program->stderr->writeString("Cannot convert");
         exit(ReturnCode::INTERPRET_TYPE_ERROR);
     }
 
     /**
      * @param string $className
      * @param mixed $value
-     * @return ObjectI
      */
     private function createInstance(string $className, $value): ObjectI
     {
         $class = $this->program->getClass($className);
         if (!$class) {
-            $this->program->stderr->writeString("Type error: Class $className not found");
+            $this->program->stderr->writeString("Class not found");
             exit(ReturnCode::INTERPRET_TYPE_ERROR);
         }
         $instance = new ObjectI($class, $this->program);

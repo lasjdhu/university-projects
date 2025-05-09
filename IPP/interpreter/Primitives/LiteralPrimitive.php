@@ -1,7 +1,7 @@
 <?php
 
 /**
- * IPP - Literal definition
+ * IPP - Literal primitive
  * @author Dmitrii Ivanushkin (xivanu00)
  */
 

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * IPP - Class definition
+ * IPP - Class primitive
  * @author Dmitrii Ivanushkin (xivanu00)
  */
 
@@ -30,6 +30,12 @@ class ClassPrimitive
             }
         }
 
+        if ($this->name === "Block" && strpos($selector, "value") === 0) {
+            if (isset($this->methods["valueWildcard"])) {
+                return $this->methods["valueWildcard"];
+            }
+        }
+
         if ($this->parent) {
             $parent = $program->getClass($this->parent);
             if ($parent) {
@@ -38,5 +44,21 @@ class ClassPrimitive
         }
 
         return null;
+    }
+
+    public function inherits(string $className, Program $program): bool
+    {
+        if ($this->name === $className) {
+            return true;
+        }
+
+        if ($this->parent) {
+            $parent = $program->getClass($this->parent);
+            if ($parent) {
+                return $parent->inherits($className, $program);
+            }
+        }
+
+        return false;
     }
 }

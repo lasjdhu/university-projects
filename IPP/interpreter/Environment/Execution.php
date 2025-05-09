@@ -7,6 +7,8 @@
 
 namespace IPP\Student\Environment;
 
+use IPP\Core\ReturnCode;
+
 class Execution
 {
     public ObjectI $self;
@@ -32,18 +34,19 @@ class Execution
         foreach ($parameters as $i => $name) {
             $this->variables[$name] = $arguments[$i] ?? null;
         }
+        $converter = new TypeConverter($self->program);
         $this->variables['self'] = $self;
-        $this->variables['true'] = true;
-        $this->variables['false'] = false;
-        $this->variables['nil'] = null;
+        $this->variables['true'] = $converter->toObject(true);
+        $this->variables['false'] = $converter->toObject(false);
+        $this->variables['nil'] = $converter->toObject(null);
     }
 
-    /**
-     * @param string $name
-     * @return mixed
-     */
-    public function getVariable(string $name)
+    public function getVariable(string $name): mixed
     {
+        if (!isset($this->variables[$name])) {
+            $this->self->program->stderr->writeString("Variable not found");
+            exit(ReturnCode::INTERPRET_TYPE_ERROR);
+        }
         return $this->variables[$name];
     }
 

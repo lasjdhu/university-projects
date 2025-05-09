@@ -1,13 +1,14 @@
 <?php
 
 /**
- * IPP - Block definition
+ * IPP - Block primitive
  * @author Dmitrii Ivanushkin (xivanu00)
  */
 
 namespace IPP\Student\Primitives;
 
 use IPP\Student\Environment\Execution;
+use IPP\Student\Environment\TypeConverter;
 
 class BlockPrimitive
 {
@@ -62,11 +63,23 @@ class BlockPrimitive
                 $context->setVariable($param, $context->arguments[$index]);
             }
 
+            // sort statements by their order attribute
+            $sortedStatements = $this->statements;
+            usort($sortedStatements, function ($a, $b) {
+                return $a->order <=> $b->order;
+            });
+
             // block returns the value of the last statement
             $result = null;
-            foreach ($this->statements as $statement) {
+            foreach ($sortedStatements as $statement) {
                 $result = $statement->execute($context);
             }
+
+            if ($result === null) {
+                $converter = new TypeConverter($context->self->program);
+                return $converter->toObject(null);
+            }
+
             return $result;
         } finally {
             // restore previous parent context when execution finishes

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * IPP - PHP Project Student
+ * IPP - SOL25 Interpreter
  * @author Dmitrii Ivanushkin (xivanu00)
  */
 

@@ -1,13 +1,14 @@
 <?php
 
 /**
- * IPP - Statement definition
+ * IPP - Statement primitive
  * @author Dmitrii Ivanushkin (xivanu00)
  */
 
 namespace IPP\Student\Primitives;
 
 use IPP\Student\Environment\Execution;
+use IPP\Student\Environment\TypeConverter;
 
 class StatementPrimitive
 {
@@ -21,11 +22,7 @@ class StatementPrimitive
         $this->order = $order;
     }
 
-    /**
-     * @param Execution $context
-     * @return mixed
-     */
-    public function execute(Execution $context)
+    public function execute(Execution $context): mixed
     {
         $result = null;
         foreach ($this->expressions as $expr) {
@@ -34,6 +31,11 @@ class StatementPrimitive
 
         if ($this->varName !== null) {
             $context->setVariable($this->varName, $result);
+        }
+
+        if ($result === null) {
+            $converter = new TypeConverter($context->self->program);
+            return $converter->toObject(null);
         }
 
         return $result;

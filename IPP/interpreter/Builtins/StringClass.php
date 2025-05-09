@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * IPP - String class definition
+ * @author Dmitrii Ivanushkin (xivanu00)
+ */
+
 namespace IPP\Student\Builtins;
 
 use IPP\Student\Primitives\ClassPrimitive;
@@ -16,45 +21,102 @@ class StringClass
                 return $stdin->readString();
             },
             "print" => function (ObjectI $self) use ($stdout) {
-                $stdout->writeString((string)$self->attributes['value']);
+                $value = $self->attributes['value'] ?? '';
+                $stdout->writeString((string)$value);
                 return $self;
             },
             "equalTo:" => function (ObjectI $self, array $args) {
-                $argValue = $args[0] instanceof ObjectI ? (string)$args[0]->attributes['value'] : (string)$args[0];
-                $isEqual = (string)$self->attributes['value'] === $argValue;
-                $boolClass = $self->program->getClass($isEqual ? "True" : "False");
+                $selfValue = $self->attributes['value'] ?? '';
+
+                $argValue = '';
+                if (isset($args[0])) {
+                    if ($args[0] instanceof ObjectI) {
+                        $argValue = $args[0]->attributes['value'] ?? '';
+                    } else {
+                        $argValue = (string)$args[0];
+                    }
+                }
+
+                $boolClass = $self->program->getClass($selfValue === $argValue ? "True" : "False");
                 return new ObjectI($boolClass, $self->program);
             },
             "asString" => function (ObjectI $self) {
                 return $self;
             },
             "asInteger" => function (ObjectI $self) {
-                if (is_numeric($self->attributes['value'])) {
+                $value = $self->attributes['value'] ?? '';
+                if (is_numeric($value)) {
                     $intClass = $self->program->getClass("Integer");
                     $intObj = new ObjectI($intClass, $self->program);
-                    $intObj->attributes['value'] = (int)$self->attributes['value'];
+                    $intObj->attributes['value'] = (int)$value;
                     return $intObj;
                 }
                 $nilClass = $self->program->getClass("Nil");
                 return new ObjectI($nilClass, $self->program);
             },
             "concatenateWith:" => function (ObjectI $self, array $args) {
-                if ($args[0] instanceof ObjectI && $args[0]->class->name === "String") {
+                if (
+                    isset($args[0]) && $args[0] instanceof ObjectI &&
+                    $args[0]->class->inherits("String", $self->program)
+                ) {
+                    $selfValue = $self->attributes['value'] ?? '';
+                    $argValue = $args[0]->attributes['value'] ?? '';
+
                     $strClass = $self->program->getClass("String");
                     $strObj = new ObjectI($strClass, $self->program);
-                    $strObj->attributes['value'] =
-                        (string)$self->attributes['value'] . (string)$args[0]->attributes['value'];
+                    $strObj->attributes['value'] = $selfValue . $argValue;
                     return $strObj;
                 }
                 $nilClass = $self->program->getClass("Nil");
                 return new ObjectI($nilClass, $self->program);
             },
-            "startsWith:endsBefore:" => function () {
-                // Not implemented
-                return null;
+            "startsWith:endsBefore:" => function (ObjectI $self, array $args) {
+                $str = $self->attributes['value'] ?? '';
+
+                $start = 0;
+                $end = 0;
+
+                if (isset($args[0])) {
+                    if ($args[0] instanceof ObjectI) {
+                        $start = (int)($args[0]->attributes['value'] ?? 0);
+                    } else {
+                        $start = (int)$args[0];
+                    }
+                }
+
+                if (isset($args[1])) {
+                    if ($args[1] instanceof ObjectI) {
+                        $end = (int)($args[1]->attributes['value'] ?? 0);
+                    } else {
+                        $end = (int)$args[1];
+                    }
+                }
+
+                if ($start <= 0 || $end <= 0) {
+                    $nilClass = $self->program->getClass("Nil");
+                    return new ObjectI($nilClass, $self->program);
+                }
+
+                if ($end <= $start) {
+                    $stringClass = $self->program->getClass("String");
+                    $strObj = new ObjectI($stringClass, $self->program);
+                    $strObj->attributes['value'] = '';
+                    return $strObj;
+                }
+
+                $start--;
+                $end--;
+
+                $result = substr($str, $start, $end - $start);
+
+                $stringClass = $self->program->getClass("String");
+                $strObj = new ObjectI($stringClass, $self->program);
+                $strObj->attributes['value'] = $result;
+                return $strObj;
             },
-            "isString" => function () {
-                return true;
+            "isString" => function (ObjectI $self) {
+                $boolClass = $self->program->getClass("True");
+                return new ObjectI($boolClass, $self->program);
             }
         ];
 

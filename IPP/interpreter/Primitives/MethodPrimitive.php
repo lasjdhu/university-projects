@@ -1,7 +1,7 @@
 <?php
 
 /**
- * IPP - Method definition
+ * IPP - Method primitive
  * @author Dmitrii Ivanushkin (xivanu00)
  */
 
@@ -26,16 +26,29 @@ class MethodPrimitive
     /**
      * @param ObjectI $receiver
      * @param mixed[] $args
+     * @param string|null $originalSelector
      */
-    public function invoke(ObjectI $receiver, array $args): mixed
+    public function invoke(ObjectI $receiver, array $args, ?string $originalSelector = null): mixed
     {
         if ($this->implementation !== null) {
+            if ($this->selector === "valueWildcard" && $originalSelector !== null) {
+                return ($this->implementation)($receiver, $args, $originalSelector);
+            }
             return ($this->implementation)($receiver, $args);
         }
 
-        // methods use their first block with receiver as self for execution
         $block = $this->blocks[0];
         $context = new Execution($receiver, $args, $block->parameters ?? []);
+
+        if ($receiver->class->parent) {
+            $parentClass = $receiver->program->getClass($receiver->class->parent);
+            if ($parentClass) {
+                $superO = new ObjectI($parentClass, $receiver->program);
+                $superO->attributes = $receiver->attributes;
+                $context->setVariable('super', $superO);
+            }
+        }
+
         return $block->execute($context);
     }
 }
