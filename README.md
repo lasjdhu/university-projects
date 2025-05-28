@@ -1,5 +1,4 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/Years-2021--2024-lightgrey.svg" alt="Years Badge"/>
   <img src="https://img.shields.io/badge/Status-In%20Progress-green.svg" alt="Status Badge"/>
 </p>
 
