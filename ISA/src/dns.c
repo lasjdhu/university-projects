@@ -17,7 +17,6 @@ void handle_signal() {
   if (SOCKFD != -1) {
     close(SOCKFD);
   }
-  printf("Exiting\n");
   exit(EXIT_SUCCESS);
 }
 
