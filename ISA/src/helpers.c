@@ -11,14 +11,13 @@
  * @returns void
  */
 void print_usage() {
-  fprintf(stderr,
-          "Usage: dns -s server [-p port] -f filter_file [-v]\n"
-          "\n"
-          "Options:\n"
-          "\t-s server      IP address of the DNS resolver\n"
-          "\t-p port        Port to listen on for incoming DNS queries\n"
-          "\t-f filter_file Path to file containing blocked domains\n"
-          "\t-v             Verbose mode with logging\n");
+  fprintf(stderr, "Usage: dns -s server [-p port] -f filter_file [-v]\n"
+                  "\n"
+                  "Options:\n"
+                  "\t-s server      IP address of the DNS resolver\n"
+                  "\t-p port        Port to listen for incoming DNS queries\n"
+                  "\t-f filter_file Path to file containing blocked domains\n"
+                  "\t-v             Verbose mode with logging\n");
 }
 
 /*
