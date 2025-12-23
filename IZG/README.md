@@ -1,4 +1,4 @@
-# Custom GPU
+# Shaders
 
 ## May 2024
 
@@ -13,7 +13,7 @@ the loaded model file into the graphics card memory and command buffer. In
 addition, there is a `fwd.hpp` file - it contains declarations of structures and
 constants.
 
-### Usage details
+### Usage
 
 Files `gpu.cpp` and `prepareModel.cpp` are the only files I modified. Whole
 project was wrapped in a template made by Ph.D Tomáš Milet and it is too big for
