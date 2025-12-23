@@ -24,12 +24,12 @@ basically means that code is usable):
 | ICP         | The C++ Programming Language               | Pac-Man                              |
 | IDS         | Database Systems                           | Pharmacy DB                          |
 | IFJ         | Formal Languages and Compilers             | Zig compiler                         |
-| IMP         | Microprocessors and Embedded Systems       | Simple HW Alarm                      |
+| IMP         | Microprocessors and Embedded Systems       | Simple HW alarm                      |
 | INC         | Digital Systems Design                     | Circuit design                       |
 | INP         | Design of Computer Systems                 | Brainfuck compiler, Vigenère encoder |
 | IOS         | Operating Systems                          | Semaphores, Crypto exchange script   |
 | IPK         | Computer Communications and Networks       | Client for a chat server             |
-| IPP         | Principles of Programming Languages        | Interpreter of custom language       |
+| IPP         | Principles of Programming Languages        | Custom language toolchain            |
 | ISC         | PC Seminar                                 | Palindrome finder                    |
 | ISJ         | Scripting Languages                        | Some python scripts                  |
 | ISS         | Signals and Systems                        | Car engines audio processor          |
