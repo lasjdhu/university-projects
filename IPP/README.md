@@ -1,4 +1,4 @@
-# SOL25 Language Toolchain
+# Custom language toolchain
 
 ## May 2025
 
