@@ -1,14 +1,28 @@
-# You can tell by their voice...
+# Car engines audio processor
 
 ## November 2024
 
 ### Motivation
 
-One is able to identify the source of the sound by the sound. We can tell a guitar from a piano, a saxophone or an organ. We can safely distinguish the sound a dog makes from the sound a cat makes. Dog owners can distinguish their dog's bark from other dogs, and lovers of songbirds can tell the species of songbird by its song. We know the sound of a truck from a car. We know our friends by their voices. We hear the difference in sounds and can match them to their source or to each other.
+One is able to identify the source of the sound by the sound. We can tell a
+guitar from a piano, a saxophone or an organ. We can safely distinguish the
+sound a dog makes from the sound a cat makes. Dog owners can distinguish their
+dog's bark from other dogs, and lovers of songbirds can tell the species of
+songbird by its song. We know the sound of a truck from a car. We know our
+friends by their voices. We hear the difference in sounds and can match them to
+their source or to each other.
 
-And if a slow and imperfect biological human with his ear has such abilities, surely it will be no problem for an infinitely faster and more accurate computer equipped with high quality sensors... Well, we won't go that far, we've separated quality sensors and sound recording from processing, so you won't have to run around Brno recording all sorts of sounds. We have prepared for you engine sounds of several car models at different speeds.
+And if a slow and imperfect biological human with his ear has such abilities,
+surely it will be no problem for an infinitely faster and more accurate computer
+equipped with high quality sensors... Well, we won't go that far, we've
+separated quality sensors and sound recording from processing, so you won't have
+to run around Brno recording all sorts of sounds. We have prepared for you
+engine sounds of several car models at different speeds.
 
-Your task will be to automatically match the recordings coming from one car model. Don't worry, one car is used for all recordings of a given model, so there is no difference between two cars caused by the mileage of the engine or how the owner treated it at the time of the previous recording.
+Your task will be to automatically match the recordings coming from one car
+model. Don't worry, one car is used for all recordings of a given model, so
+there is no difference between two cars caused by the mileage of the engine or
+how the owner treated it at the time of the previous recording.
 
 ### Implementation
 
@@ -16,7 +30,7 @@ Your task will be to automatically match the recordings coming from one car mode
 
 ##### 1.1 Import libraries
 
-``` python
+```python
 import os
 import re
 import glob
@@ -34,7 +48,7 @@ import seaborn as sns
 
 ##### 1.2 Download the zip file
 
-``` python
+```python
 login = "xivanu00"
 zip_file = login + ".zip"
 assignment_file = "https://********/" + zip_file
@@ -50,21 +64,17 @@ assignment_file = "https://********/" + zip_file
       inflating: xivanu00/Fiat_Panda_Drive.wav  
       inflating: xivanu00/test_q.wav     
       inflating: xivanu00/Mercedes_300SE_Drive.wav  
-      inflating: xivanu00/test_r.wav     
+      inflating: xivanu00/test_r.wav
 
 ##### 1.3 Load data
 
--   **Working with references**<br />
-    References will be in `ref_signals` <br />
-    Reference labels in `ref_labels`<br />
-    Reference count in `N_ref`
+- **Working with references**<br /> References will be in `ref_signals` <br />
+  Reference labels in `ref_labels`<br /> Reference count in `N_ref`
 
--   **Working with tests**<br />
-    Tests will be in `test_signals`<br />
-    Test labels in `test_labels`<br />
-    Test count in `N_test`
-    
-``` python
+- **Working with tests**<br /> Tests will be in `test_signals`<br /> Test labels
+  in `test_labels`<br /> Test count in `N_test`
+
+```python
 def get_signals(labs):
   signals = []
   N = len(labs)
@@ -97,7 +107,7 @@ print (ref_labels)
 
 ##### 2.1 Create `draw_plot` decorator for convenience
 
-``` python
+```python
 def draw_plot(draw_func):
   def wrapper(signals, Fs, labels, title):
     num_plots = len(signals) # 4 for each suite
@@ -119,15 +129,15 @@ def draw_plot(draw_func):
 
 ##### 2.2 Visualize raw signals
 
-I'll start with drawing plots of raw signals. I'll use subplots for each one of `test_signals` and `ref_signals`
+I'll start with drawing plots of raw signals. I'll use subplots for each one of
+`test_signals` and `ref_signals`
 
--   **x-axis**<br />
-    Time `t` [s] (always 1s, but I calculate it using formula `t = n / Fs`)
+- **x-axis**<br /> Time `t` [s] (always 1s, but I calculate it using formula
+  `t = n / Fs`)
 
--   **y-axis**<br />
-    Amplitude of `signal`
+- **y-axis**<br /> Amplitude of `signal`
 
-``` python
+```python
 def get_t(signal, Fs):
   N = len(signal)
   n = np.arange(0, N)
@@ -148,23 +158,21 @@ draw_raw_signal(test_signals, Fs_test, test_labels, "Test Signals")
 draw_raw_signal(ref_signals, Fs_ref, ref_labels, "Reference Signals")
 ```
 
-![](assets/1.png)
-![](assets/2.png)
+![](assets/1.png) ![](assets/2.png)
 
 ##### 2.3 Visualize magnitude with FFT
 
-Now I would like to perform the Fast Fourier Transform (FFT) to analyze
-the frequencies of reference and test audio signals. I decided to start
-with it because audio signals should contain periodic patterns that we
-can compare later on.
+Now I would like to perform the Fast Fourier Transform (FFT) to analyze the
+frequencies of reference and test audio signals. I decided to start with it
+because audio signals should contain periodic patterns that we can compare later
+on.
 
--   **x-axis**<br />
-    Frequencies [Hz] that are present in a `signal`
+- **x-axis**<br /> Frequencies [Hz] that are present in a `signal`
 
--   **y-axis**<br />
-    Magnitude [dB] that shows strength of frequencies. Higher magnitudes indicate dominant frequencies in a `signal`.
+- **y-axis**<br /> Magnitude [dB] that shows strength of frequencies. Higher
+  magnitudes indicate dominant frequencies in a `signal`.
 
-``` python
+```python
 def get_fft(signal, T):
   # Use built-in FFT from numpy to get spectrum
   spectrum = np.fft.fft(signal)
@@ -189,36 +197,35 @@ draw_fft_spectrum(test_signals, Fs_test, test_labels, "Test Signals Spectrum")
 draw_fft_spectrum(ref_signals, Fs_ref, ref_labels, "Reference Signals Spectrum")
 ```
 
-![](assets/3.png)
-![](assets/4.png)
+![](assets/3.png) ![](assets/4.png)
 
-From the plots printed above I can tell at a glance that this
-represenation of tests and references has similarity in some cases.
-These could turn out to be totally wrong in the end:
+From the plots printed above I can tell at a glance that this represenation of
+tests and references has similarity in some cases. These could turn out to be
+totally wrong in the end:
 
--   **test_q** and **Mercedes_300SE_Drive** spectra have a similar "sliding down" after about 7000 Hz
--   **test_r** and **Fiat_Panda_Drive** spectra also have similar slidings that \"flatten\" around 8000 Hz
+- **test_q** and **Mercedes_300SE_Drive** spectra have a similar "sliding down"
+  after about 7000 Hz
+- **test_r** and **Fiat_Panda_Drive** spectra also have similar slidings that
+  \"flatten\" around 8000 Hz
 
 Other plots don't share such obvious similarities to speak definitively.
 
 ##### 2.4 Visualize PSD
 
-Before I start extracting features and making further comparisons, I
-would like to try Power Spectral Density (PSD) instead of a classic raw
-FFT. It *should* be able to reduce noise, better highlight
-concentrations of frequencies and overall give a better comparison. I
-use built-in function from `scipy.signal` that applies **Welch\'s
-method** to extract PSD by windowing each sample (I divided signal to
-1024 of them) and then I convert the PSD to a logarithmic scale for
+Before I start extracting features and making further comparisons, I would like
+to try Power Spectral Density (PSD) instead of a classic raw FFT. It _should_ be
+able to reduce noise, better highlight concentrations of frequencies and overall
+give a better comparison. I use built-in function from `scipy.signal` that
+applies **Welch\'s method** to extract PSD by windowing each sample (I divided
+signal to 1024 of them) and then I convert the PSD to a logarithmic scale for
 better visualization and comparison.
 
--   **x-axis**</br>
-    Frequencies \[Hz\] that are present in a `signal`
+- **x-axis**</br> Frequencies \[Hz\] that are present in a `signal`
 
--   **y-axis**</br>
-    Power Spectral Density that shows how much of the signal\'s energy resides at specific frequencies.
+- **y-axis**</br> Power Spectral Density that shows how much of the signal\'s
+  energy resides at specific frequencies.
 
-``` python
+```python
 def get_psd(signal, Fs):
   # Use built-in PSD extraction (Welch's method)
   frequencies, psd = scsig.welch(signal, Fs, nperseg=1024)
@@ -240,21 +247,20 @@ draw_psd(test_signals, Fs_test, test_labels, "Test Signals PSD")
 draw_psd(ref_signals, Fs_ref, ref_labels, "Reference Signals PSD")
 ```
 
-![](assets/5.png)
-![](assets/6.png)
+![](assets/5.png) ![](assets/6.png)
 
 #### Choosing similarity metric and making comparisons
 
 ##### 3.1 Choose a metric
 
-In this last segment I need to decide which metric I want to use for my
-task. I decided to go with **Mean Squared Error** (MSE). MSE calculates
-how much the frequency content of one signal deviates from the other.
-For convenience I normalize MSE so after it, higher values in the
-`combined_matrix` represent less difference between the signals, meaning
-they are more similar, and lower values mean the signals are less similar.
+In this last segment I need to decide which metric I want to use for my task. I
+decided to go with **Mean Squared Error** (MSE). MSE calculates how much the
+frequency content of one signal deviates from the other. For convenience I
+normalize MSE so after it, higher values in the `combined_matrix` represent less
+difference between the signals, meaning they are more similar, and lower values
+mean the signals are less similar.
 
-``` python
+```python
 def calculate_combined_score(signal1, signal2, Fs, max_mse):
   _, psd1 = get_psd(signal1, Fs)
   _, psd2 = get_psd(signal2, Fs)
@@ -288,9 +294,10 @@ def create_combined_matrix(test_signals, ref_signals, Fs):
 
 ##### 3.2 Visuallize matrix and make predictions
 
-Now when I have combined matrix I can easily visualize it with a **heatmap** and use it assigning signal pairs.
+Now when I have combined matrix I can easily visualize it with a **heatmap** and
+use it assigning signal pairs.
 
-``` python
+```python
 def plot_heatmap(matrix, test_labels, ref_labels, title, xlabel, ylabel):
   plt.figure(figsize=(10, 8))
   sns.heatmap(matrix, annot=True, fmt=".3f", cmap="coolwarm", xticklabels=ref_labels, yticklabels=test_labels)
@@ -325,7 +332,6 @@ for test_signal, assignment in assignments.items():
 
 ![](assets/7.png)
 
-
     Test Signal: test_b -> No match
     Test Signal: test_r -> No match
     Test Signal: test_i -> Audi_A5_Drive
@@ -333,11 +339,10 @@ for test_signal, assignment in assignments.items():
 
 ##### 3.3 Aftermath
 
-So, the results aren\'t too exciting. I think I correctly identified
-`test_i` (Audi) and `test_q` (Mercedes), but there should be the third
-car. I tried to use different metrics like **Euclidean distance**,
-**Cross-correlation coefficient** etc. I also tried to combine multiple
-metrics and adjust weights when I was calculating `combined_matrix`, but
-again I had no luck. There could be of course a problem with the signals
-preprocessing. Maybe I needed to apply filter, smoothen data or increase
-`nperseg` value while calculating PSD
+So, the results aren\'t too exciting. I think I correctly identified `test_i`
+(Audi) and `test_q` (Mercedes), but there should be the third car. I tried to
+use different metrics like **Euclidean distance**, **Cross-correlation
+coefficient** etc. I also tried to combine multiple metrics and adjust weights
+when I was calculating `combined_matrix`, but again I had no luck. There could
+be of course a problem with the signals preprocessing. Maybe I needed to apply
+filter, smoothen data or increase `nperseg` value while calculating PSD

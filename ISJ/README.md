@@ -4,7 +4,8 @@
 
 ### Specification
 
-Can be found in each file in comments. The goal of programs is to learn Python as scripting language.
+Can be found in each file in comments. The goal of programs is to learn Python
+as scripting language.
 
 ### Usage
 

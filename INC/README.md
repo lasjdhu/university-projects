@@ -1,4 +1,4 @@
-# UART RX
+# Circuit design
 
 ## April 2024
 
@@ -8,8 +8,7 @@ Implementation of a circuit for receiving data
 
 ### Result
 
-![Wave picture](assets/screen.png)
-![Simulation picture](assets/result.png)
+![Wave picture](assets/screen.png) ![Simulation picture](assets/result.png)
 
 ### Architecture of the designed circuit at the RTL level
 
