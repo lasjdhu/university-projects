@@ -1,4 +1,4 @@
-# Simple Alarm
+# Simple HW Alarm
 
 ## December 2025
 
