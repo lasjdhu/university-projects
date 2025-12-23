@@ -8,10 +8,10 @@
 
 # Brno University of Technology Projects List
 
-Welcome to my repository! This repository contains various projects I worked on
-during my time at **Brno University of Technology**, between 2021 and 2024. You
-can find all information about the projects in the respective `README.md` files
-inside each course folder.
+This repository contains various projects I worked on during my time at **Brno
+University of Technology**, between 2021 and 2026. You can find all information
+about the projects in the respective `README.md` files inside each course
+folder.
 
 ## 📁 Projects List
 
@@ -36,13 +36,6 @@ basically means that code is usable):
 | IZG         | Computer Graphics                          | Shaders                             |
 | IZLO        | Introduction to Logic for Computer Science | SAT and SMT solvers                 |
 | IZP         | Introduction to Programming Systems        | Password checker                    |
-
-## 🚀 How to Navigate This Repository
-
-- Each course project(s) contain(s) a **README.md** with detailed information
-  about the respective projects.
-- The repository is updated regularly to reflect the latest changes and
-  additions to my university projects.
 
 ## 📜 Regarding License(s)
 
