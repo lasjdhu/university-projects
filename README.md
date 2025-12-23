@@ -1,8 +1,4 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/Status-In%20Progress-green.svg" alt="Status Badge"/>
-</p>
-
-<p align="center">
   <img src="logo.png" alt="Brno University of Technology" width="200"/>
 </p>
 
