@@ -25,6 +25,7 @@ basically means that code is usable):
 | IDS         | Database Systems                           | Pharmacy DB                          |
 | IFJ         | Formal Languages and Compilers             | Zig compiler                         |
 | IMP         | Microprocessors and Embedded Systems       | Simple HW alarm                      |
+| IMS         | Modelling and Simulation                   | Queueing system model                |
 | INC         | Digital Systems Design                     | Circuit design                       |
 | INP         | Design of Computer Systems                 | Brainfuck compiler, Vigenère encoder |
 | IOS         | Operating Systems                          | Semaphores, Crypto exchange script   |
