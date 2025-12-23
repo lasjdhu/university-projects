@@ -2,6 +2,13 @@
 
 ## December 2024
 
+## Authors
+
+- [@lasjdhu](https://github.com/lasjdhu)
+- [@prosperritty](https://github.com/prosperritty)
+- [@m3m01r](https://github.com/m3m01r)
+- [@JustMell0](https://github.com/JustMell0)
+
 ### Description
 
 The goal of this project is to implement a compiler for an **IFJ24** language
@@ -19,13 +26,6 @@ Main parts:
   three-address code for given interpret `ic24int`
 - **Auxiliary data structures and algorithms:** stack, string, abstract syntax
   tree, dynamic array and memory allocation management
-
-### Authors
-
-- [@lasjdhu](https://github.com/lasjdhu)
-- [@prosperritty](https://github.com/prosperritty)
-- [@m3m01r](https://github.com/m3m01r)
-- [@JustMell0](https://github.com/JustMell0)
 
 ### Compilation flow
 
