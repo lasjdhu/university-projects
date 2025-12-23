@@ -1,4 +1,4 @@
-# Password check
+# Password checker
 
 ## October 2021
 
