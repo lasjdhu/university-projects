@@ -1,15 +1,15 @@
-# IMS Projekt
+# Queueing System Model of Agricultural Production
 
-## Autor: Dmitrii Ivanushkin (xivanu00)
+## December 2025
 
-## Spuštění
+### Usage
 
 ```sh
 make
 ./main
 ```
 
-## Testovaní (simulace běží 150x a vypisuje přůměrné výsledky):
+### Tests
 
 ```sh
 make
