@@ -31,6 +31,7 @@ basically means that code is usable):
 | IOS         | Operating Systems                          | Semaphores, Crypto exchange script   |
 | IPK         | Computer Communications and Networks       | Client for a chat server             |
 | IPP         | Principles of Programming Languages        | Custom language toolchain            |
+| ISA         | Network Applications and Administration    | Filtering DNS resolver               |
 | ISC         | PC Seminar                                 | Palindrome finder                    |
 | ISJ         | Scripting Languages                        | Python scripts                       |
 | ISS         | Signals and Systems                        | Car engines audio processor          |
