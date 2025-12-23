@@ -1,0 +1,56 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+@import "tailwindcss";
+
+@layer components {
+  .btn-primary {
+    @apply flex items-center justify-center h-[42px] px-5 py-2.5 text-sm font-medium text-white bg-primary-600 rounded-lg cursor-pointer text-center;
+  }
+
+  .btn-secondary {
+    @apply flex items-center justify-center h-[42px] px-5 py-2.5 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg cursor-pointer text-center;
+  }
+
+  .btn-ghost {
+    @apply flex items-center justify-center h-[42px] px-5 py-2.5 text-sm font-medium rounded-lg cursor-pointer text-center;
+  }
+
+  .input-field {
+    @apply bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5;
+  }
+
+  .link {
+    @apply font-medium text-primary-700 hover:underline;
+  }
+
+  .card {
+    @apply bg-white rounded-lg shadow p-6 sm:p-8;
+  }
+
+  .heading-1 {
+    @apply text-2xl md:text-3xl font-bold leading-tight tracking-tight text-gray-900;
+  }
+
+  .heading-2 {
+    @apply text-lg font-bold leading-tight tracking-tight text-gray-900 md:text-xl;
+  }
+
+  .heading-3 {
+    @apply font-bold leading-tight tracking-tight text-gray-900;
+  }
+}
+
+@theme {
+  --font-sans: "Inter", "sans-serif";
+
+  --color-primary-50: #f0faff;
+  --color-primary-100: #e0f5fe;
+  --color-primary-200: #b9edfe;
+  --color-primary-300: #7cdffd;
+  --color-primary-400: #36d1fa;
+  --color-primary-500: #0cbbeb;
+  --color-primary-600: #00a9e0;
+  --color-primary-700: #0178a3;
+  --color-primary-800: #066586;
+  --color-primary-900: #0b536f;
+  --color-primary-950: #07354a;
+}

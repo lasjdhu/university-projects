@@ -1,0 +1,665 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>Projekt IIS</title>
+    <style type="text/css">
+      table {
+        border-collapse: collapse;
+      }
+      td,
+      th {
+        border: 1px solid black;
+        padding: 0.3em 0.5em;
+        text-align: left;
+      }
+      dt {
+        font-weight: bold;
+        margin-top: 0.5em;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Zkontrolujte prosím nastavení kódování v hlavičce dokumentu 
+     podle použitého editoru -->
+
+    <h1>Studentské turnaje</h1>
+    <!-- Nahradte názvem svého zadání -->
+
+    <dl>
+      <dt>Autoři</dt>
+      <dd>
+        Albert Tikaiev
+        <!-- Nahraďte skutečným jménem a e-mailem autora a popisem činnosti -->
+        <a href="mailto:xtikaia00@stud.fit.vutbr.cz"
+          >xtikaia00@stud.fit.vutbr.cz</a
+        >
+        - Frontend, Backend, dokumentace
+      </dd>
+      <dd>
+        Dmitrii Ivanushkin
+        <!-- Nahraďte skutečným jménem a e-mailem autora a popisem činnosti -->
+        <a href="mailto:xivanu00@stud.fit.vutbr.cz"
+          >xivanu00@stud.fit.vutbr.cz</a
+        >
+        - Frontend, Backend
+      </dd>
+      <dd>
+        Dias Tursynbayev
+        <!-- Nahraďte skutečným jménem a e-mailem autora a popisem činnosti -->
+        <a href="mailto:xtursyd00@stud.fit.vutbr.cz"
+          >xtursyd00@stud.fit.vutbr.cz</a
+        >
+        - Backend, zajišťení kontinuálního doručování (CD)
+      </dd>
+      <dt>URL aplikace</dt>
+      <dd>
+        <a href="https://frontend-production-5f26.up.railway.app/"
+          >https://frontend-production-5f26.up.railway.app/</a
+        >
+      </dd>
+      <!-- <dd>
+        (pokud má aplikace více vstupních stránek, napište obdobně další URL)
+      </dd> -->
+    </dl>
+
+    <h2>Uživatelé systému pro testování</h2>
+    <p>
+      Uveďte prosím existující zástupce <strong>všech rolí uživatelů</strong>.
+    </p>
+    <table>
+      <tr>
+        <th>Email</th>
+        <th>Heslo</th>
+        <th>Role</th>
+      </tr>
+      <tr>
+        <td>admin1@fitourney.com</td>
+        <td>adminadmin1</td>
+        <td>Administrátor</td>
+      </tr>
+      <tr>
+        <td>diane.hood@gmail.com</td>
+        <td>useruser1</td>
+        <td>Zaregistrovaný užívatel (správce týmu a turnaje)</td>
+      </tr>
+      <tr>
+        <td>jazmine.hancock@gmail.com</td>
+        <td>useruser16</td>
+        <td>Zaregistrovaný užívatel (správce týmu)</td>
+      </tr>
+    </table>
+
+    <!-- <p>
+      (Diagram případů užití není nutné vkládat, pokud IS implementuje role a
+      případy užití definované zadáním.)
+    </p> -->
+
+    <h3>Video</h3>
+
+    <p>
+      Přiložte odkaz na komentované video demostrující použití informačního
+      systému. Zaměřte se na případy užití definované zadáním (např. registrace
+      uživatele, správa uživatelů a činnosti jednotlivých rolí). Video nahrajte
+      například na VUT Google Drive, kde ho bude možné přímo spustit z odkazu.
+    </p>
+
+    <h2>Implementace</h2>
+    <!-- <p>
+      Stručná dokumentace k implementaci, která popisuje, které části projektu
+      (např. PHP skripty) implementují jednotlivé případy použití.
+    </p> -->
+
+    <h3>Backend</h3>
+
+    <p>Implementace backendu je roždělena do 4 modulů (nebo balíčků):</p>
+    <ul>
+      <li>
+        <em>internal</em> obsahuje implementace autorizace, middlewarů a další
+        interní logiku aplikace
+      </li>
+      <li>
+        <em>handlers</em> obsahuje funkce, které jsou mapované globalním
+        routerem na jednotlivé cesty API
+      </li>
+      <li>
+        <em>services</em> obsahuje funkce zajišťující práci se službami, jako
+        jsou databáze a Amazon S3
+      </li>
+      <li>
+        <em>models</em> obsahuje definice typů používaných při komunikaci s
+        poskytnutým API, také určuje, jak by měly vypadat serializované data a
+        jejich omezení
+      </li>
+    </ul>
+
+    <h4>Přehled</h4>
+
+    <p>
+      Samotné REST API bylo implementováno pomocí Go frameworku
+      <a href="https://github.com/gin-gonic/gin">Gin</a>. Gin poskytuje klasický
+      router, který umožňuje mapovat HTTP požadavky určitého typu na určitou
+      cestu API. Tento framework nám také umožnil serializovat, deserializovat a
+      validovat data, vytvářet middleware. Funkce zodpovědné za zpracování
+      požadavků (respektivě kontroléry) z tohoto routeru se nacházejí v balíčku
+      <em>backend/handlers</em>.
+    </p>
+
+    <p>
+      Komunikace s databází byla implementována pomocí PostgreSQL driveru
+      <a href="https://github.com/jackc/pgx">pgx</a>. Tento driver poskytuje
+      rozhraní pro získávání dat z databáze jako Go objekty a umožňuje opětovné
+      použití připojení (<em>pgxpool</em>). Funkce zodpovědné za zpracování dat
+      z databáze (respektivě metody modelů) se nacházejí v balíčku
+      <em>backend/services</em>.
+    </p>
+
+    <h4>Autentizace a autorizace</h4>
+
+    <p>
+      Autentizace se provádí vyplněním e-mailu a hesla. Pro bezpečnost hesel
+      byla použita hešovácí funkce
+      <a href="https://en.wikipedia.org/wiki/Bcrypt">bcrypt</a> s využitím Go
+      knihovny
+      <a href="https://pkg.go.dev/golang.org/x/crypto/bcrypt"
+        >golang.org/x/crypto/bcrypt</a
+      >.
+    </p>
+
+    <p>
+      Autorizace byla implementována pomocí
+      <a href="https://www.jwt.io/">JWT</a> s využitím knihovny
+      <a href="https://github.com/golang-jwt/jwt">golang-jwt/jwt</a>. Po úspěšné
+      autorizaci uživatele backend odešle v cookie dva tokeny: <b>Accept</b> a
+      <b>Refresh</b>. Toto je klasický scénář použití tohoto tokenu, ve kterém:
+    </p>
+
+    <ul>
+      <li>
+        <b>Accept</b> slouží k prokázání totožnosti a má menší dobu života (v
+        naší implementaci 15 minut)
+      </li>
+      <li>
+        <b>Refresh</b> slouží k aktualizaci <b>Accept</b> tokenu a má větší dobu
+        života (v naší implementaci 30 dní)
+      </li>
+    </ul>
+
+    <p>
+      V našem případě jsou oba tokeny odesílány v <em>HttpOnly</em> cookie.
+      <b>Accept</b> token obsahuje potřebné informace pro všechny autorizační
+      kontroly v systému, konkrétně <b>ID</b> a <b>roli</b>(administrátor nebo
+      běžný uživatel). Ukládání role v tokenu je bezpečné z následujících
+      důvodů:
+    </p>
+
+    <ul>
+      <li>
+        Naš systém neumožňuje změnu rolí, proto nedochází k situaci, kdyby
+        uživatel měl validní token s rolí administrátora, která byla ve
+        skutečnosti nedávno odebrána.
+      </li>
+      <li>
+        Uživatel nebude moci měnit ID nebo role tak, aby token zůstal validní,
+        což je zaručeno signaturou JWT.
+      </li>
+    </ul>
+
+    <h4>Serializace a validace dat</h4>
+
+    <p>
+      Způsob serializace a deserializace dat (v JSON) spolu se způsobem validace
+      jednotlivých položek je definované v Go strukturách pomocí takzvaných
+      <em>Struct Tags</em>. Tag <em>json</em> určuje, jak se májí jmenovat
+      jednotlivé položky ze struktur v JSON reprezentaci. Tag
+      <em>binding</em> určuje parametry validací jednotlivých položek struktury.
+    </p>
+
+    <p>
+      Pro validaci byla použita knihovna
+      <a href="https://github.com/go-playground/validator"
+        >go-playground/validator/v10</a
+      >, která je kompatibilní s použitim frameworkem Gin. Gin používá tuto
+      knihovnu pro validaci během deserializace (například ve funkci
+      shouldBindJSON()) a vrací chyby generované touto knihovnou v případě
+      neúspěchu.
+    </p>
+
+    <p>Například pro nasledující položku:</p>
+
+    <em> Email string `json:"email" binding:"required,email"`</em>
+
+    <p>Knihovna detekuje chybu, pokud</p>
+    <ul>
+      <li>Položka chybí (<em>required</em>)</li>
+      <li>Položka neodpovídá formátu e-mailu (<em>email</em>)</li>
+    </ul>
+
+    <h4>
+      Implementace jednotlivých případů použití(sloužka
+      <em>backend/handlers</em>)
+    </h4>
+    <ul>
+      <li>
+        <em>authorization_handler</em>
+        <p>
+          Tento handler zpracovává požadavky související s autorizací. Například
+          přihlášení, registrace a získávání informací o autorizovaném
+          uživateli.
+        </p>
+      </li>
+      <li>
+        <em>match_handler</em>
+        <p>
+          Slouží pouze k získání zápasů s určitými parametry (hráče nebo týmu),
+          základní zpracování v rámci turnaje se nachází v handleru turnaje.
+        </p>
+      </li>
+      <li>
+        <em>overview_handler</em>
+        <p>
+          Handler, který shromažďuje obecné informace o systému pro vytvoření
+          hlavní stránky na frontendu.
+        </p>
+      </li>
+      <li>
+        <em>team_handler</em>
+        <p>
+          Tento handler umožňuje manipulovat jak s týmem, tak s hráči. Obsahuje
+          různé vyhledávání, vytváření týmů, přihlášení hráčů a aktualizaci
+          všech těchto informací.
+        </p>
+      </li>
+      <li>
+        <em>tournament_handler</em>
+        <p>
+          Handler implementující všechny operace s turnajem a jeho manipulace s
+          zápasy. Také poskytuje operace pro vyhledávání podle určitých
+          parametrů. Vytvoření turnaje, změna jeho parametrů a další změny
+          včetně zápasů najdete zde.
+        </p>
+      </li>
+      <li>
+        <em>tournament_participant_handler</em>
+        <p>
+          Slouží pro operace s uživatelem, který se může v systému prezentovat
+          jako hráč týmu nebo turnaje.Registrace do turnaje je také realizována
+          v tomto handleru.
+        </p>
+      </li>
+      <li>
+        <em>user_handler</em>
+        <p>
+          Slouží k provádění obecných operací s uživateli bez ohledu na jejich
+          roli v systému. V něm se provádí správa uživatelů.
+        </p>
+      </li>
+    </ul>
+
+    <h3>Frontend</h3>
+
+    <h4>Přehled</h4>
+
+    <p>
+      Frontendová část aplikace byla implementována pomocí knihovny
+      <em>React</em> (<a href="https://react.dev/">https://react.dev/</a>),
+      která byla zvolena hlavně kvůli její komponentovému přístupu a SPA
+      architektuře. V aplikaci se mnohokrát opakují jednotlivé prvky (kartičky,
+      pop-upy, formuláře atd.), takže <em>React</em> pomáhá při udržení
+      rozšiřitelnosti v aplikaci.
+    </p>
+
+    <p>
+      Pro práci s daty, jejich cachováním, invalidací a opětovným načítáním byl
+      použit nástroj
+      <em>TanStack Query</em>
+      (<a href="https://tanstack.com/query/latest"
+        >https://tanstack.com/query/latest</a
+      >). Tento nástroj snižuje složitost práce s asynchronní komunikací a řeší
+      problémy, které by jinak musely být implementovány manuálně.
+    </p>
+
+    <p>
+      Pro komunikaci se serverem byla použita knihovna <em>Axios</em> (<a
+        href="https://axios-http.com/"
+        >https://axios-http.com/</a
+      >). Byly implementovány <em>Axios interceptory</em> pro automatické
+      obnovení přístupového tokenu. Pokud server vrátí chybu
+      <strong>401 Unauthorized</strong>, interceptor odešle požadavek na získání
+      nového <b>Refresh</b> tokenu a po úspěchu znovu provede původní požadavek.
+      To zajišťuje pohodlnou a nepřerušovanou práci uživatele.
+    </p>
+
+    <h4>Stylování pomocí TailwindCSS</h4>
+
+    <p>
+      Pro stylování aplikace byl použit utility-first framework
+      <em>TailwindCSS</em> (<a href="https://tailwindcss.com/"
+        >https://tailwindcss.com/</a
+      >). Tailwind se ukázal jako nejvhodnější volba díky tomu, že má pohodlní
+      způsoby udržení responsivity a konzistentního designu. Některé styly (pro
+      tlačítka, inputy atd.) se dalo použít v aplikaci vícekrát.
+    </p>
+
+    <h4>Validace formulářů</h4>
+
+    <p>
+      Validace vstupních dat byla implementována pomocí kombinace knihoven
+      <em>react-hook-form</em>
+      (<a href="https://react-hook-form.com/">https://react-hook-form.com/</a>)
+      a <em>Zod</em> (<a href="https://zod.dev/">https://zod.dev/</a>).
+    </p>
+
+    <p><strong>react-hook-form</strong> byl zvolen z následujících důvodů:</p>
+
+    <ul>
+      <li>
+        výrazně lepší výkon než tradiční controlled komponenty (méně re-renderů)
+      </li>
+      <li>snadná integrace s existujícími komponentami</li>
+    </ul>
+
+    <p><strong>Zod</strong> byl zvolen z následujících důvodů:</p>
+
+    <ul>
+      <li>
+        typově bezpečna schéma validace v TypeScriptu kterou se dalo znovupoužít
+        i při definici typů v requestech
+      </li>
+      <li>kompatibilita s react-hook-form pomocí resolveru</li>
+      <li>možnost přidavat detailní a srozumitelné chybové hlášky</li>
+    </ul>
+
+    <p>
+      Část validacei tedy probíhá přímo na frontendu, což zajišťuje okamžitou
+      zpětnou vazbu pro uživatele a zvyšuje použitelnost aplikace. V
+      složitějších případech kdy validaci nebylo možné na frontendu jednoduše
+      definovat validaci se zabývá backend a uživateli ukazaná zpětná vazba v
+      toastu.
+    </p>
+
+    <h4>Zpracování chyb</h4>
+
+    <p>
+      Závažné chyby, které znemožňují korektní vykreslení stránky (například
+      když nejsou k dispozici klíčová uživatelská data na profilové stránce
+      apod.), vedou k přesměrování na dedikovanou chybovou stránku.
+    </p>
+
+    <p>
+      Méně kritické chyby a upozornění jsou zobrazovány pomocí
+      <em>toast notifikací</em>. Umožňují nenápadné informování uživatele bez
+      přerušení jeho aktuální činnosti (např. neplátné heslo).
+    </p>
+
+    <h4>Implementace turnajového pavouka</h4>
+
+    <p>
+      Vykreslování turnajového pavouka bylo implementována pomocí knihovny
+      <em>Bracketry</em>
+      (<a href="https://github.com/evroon/bracketry"
+        >https://github.com/evroon/bracketry</a
+      >). Knihovna umožňuje dynamicky generovat strukturu zápasů, párování hráčů
+      a následnou vizualizaci stromu turnaje. Pro manažera také existuje možnost
+      měnit výsledky zápasů i přimo v pavouce.
+    </p>
+
+    <h4>Responsivita a reaktivita</h4>
+
+    <p>
+      Celý frontend je navržen jako plně reaktivní SPA aplikace. Díky kombinaci
+      Reactu, responzivních tříd TailwindCSS a reaktivních dat z TanStack Query
+      je zajištěno plynulé vykreslování a korektní chování aplikaci.
+    </p>
+
+    <p>
+      Layout byl optimalizován tak, aby se přizpůsobil malým mobilním obrazovkám
+      i větším desktopovým rozlišením. Funkční prvky, jako jsou formuláře,
+      tabulky či pavouk turnaje, jsou navrženy tak, aby zůstaly čitelné a
+      použitelné i v omezeném prostoru.
+    </p>
+
+    <h3>Databáze</h3>
+
+    <img src="./img/iis_er.png" />
+
+    <h2>Instalace</h2>
+
+    <h3>Softwarové Požadavky</h3>
+
+    <ul>
+      <li>Go - verze 1.25.0 (což je uvedeno v souboru backend/go.mod)</li>
+      <ul>
+        <li>
+          Buď z manažeru balíčků vaší distribuce (apt install golang-go) nebo
+          podle
+          <a href="https://go.dev/doc/install">https://go.dev/doc/install</a>
+        </li>
+      </ul>
+      <li>Node.js - verze 24.9.0 (byla použita během implementace)</li>
+      <ul>
+        <li>
+          Buď z manažeru balíčků vaší distribuce (apt install nodejs) nebo podle
+          <a href="https://nodejs.org/en/download"
+            >https://nodejs.org/en/download</a
+          >
+        </li>
+      </ul>
+      <li>Npm - verze 11.6.2 (byla použita během implementace)</li>
+      <ul>
+        <li>
+          Buď z manažeru balíčků vaší distribuce (apt install npm) nebo podle
+          <a
+            href="https://docs.npmjs.com/downloading-and-installing-node-js-and-npm"
+            >https://docs.npmjs.com/downloading-and-installing-node-js-and-npm</a
+          >
+        </li>
+      </ul>
+      <li>PostgreSQL - verze 17.6 (byla použita během implementace)</li>
+      <ul>
+        <li>
+          Buď z manažeru balíčků vaší distribuce (apt install postgresql) nebo
+          podle
+          <a href="https://www.postgresql.org/download/"
+            >https://www.postgresql.org/download/</a
+          >
+        </li>
+      </ul>
+    </ul>
+
+    <h3>Instalace na server</h3>
+
+    <h4>Databáze</h4>
+    <p>
+      1. Nejprve je potřeba nastartovat PostgreSQL server(<a
+        href="https://www.postgresql.org/docs/current/server-start.html"
+        >podrobný postup</a
+      >), například:
+    </p>
+
+    <em>$ postgres -D /usr/local/pgsql/data >logfile 2>&1 &</em>
+
+    <p>nebo pokud máte k dispozici nástroj pg_ctl:</p>
+
+    <em>$ pg_ctl start -l logfile</em>
+
+    <p>
+      2. Vytvořit uživatele(<a
+        href="https://www.postgresql.org/docs/current/role-attributes.html"
+        >podrobný postup</a
+      >) a databázi(<a
+        href="https://www.postgresql.org/docs/current/manage-ag-createdb.html"
+        >podrobný postup</a
+      >), například:
+    </p>
+
+    <p>
+      Připojte se na PostgreSQL server(pravděpodobně budete potřebovat práva
+      administrátora):
+    </p>
+    <em>$ psql</em> nebo <em>$ postgres psql</em>
+
+    <p>Vytvořte uživatele:</p>
+    <em># CREATE ROLE uzivatel PASSWORD 'heslo';</em>
+
+    <p>Vytvořte databázi:</p>
+    <em># CREATE DATABASE databaze OWNER uzivatel;</em>
+
+    <p>
+      3. Vytváření tabulek a naplnění dat, tyto příkazy musí být spuštěny mimo
+      terminál serveru PostgreSQL.
+    </p>
+
+    <p>
+      V následujících příkazech nahraďte locahost:5432 adresou vašeho serveru
+    </p>
+
+    <p>První skript pro vytváření tabulek</p>
+    <em
+      >$ psql postgresql://uzivatel:heslo@localhost:5432/databaze -f
+      database/init.sql</em
+    >
+
+    <p>Druhý skript pro naplnění tabulek</p>
+    <em
+      >$ psql postgresql://uzivatel:heslo@localhost:5432/databaze -f
+      database/sample.sql</em
+    >
+
+    <p>
+      4. Databáze je připravena, zbývá jen zadat její adresu v backend
+      konfiguraci.
+    </p>
+
+    <h4>Backend</h4>
+
+    <p>
+      Před spuštěním backendu je nutné vyplnit soubor <em>.env</em>, ve složce
+      <em>backend</em> je šablona <em>.env.example</em>:
+    </p>
+
+    <em>$ cd backend && cp .env.example .env</em>
+
+    <p>Soubor <em>.env</em> pro backend má nasledující položky:</p>
+    <ul>
+      <li>
+        <em>DATABASE_URL</em> - adresa databázového serveru (například
+        postgresql://uzivatel:heslo@localhost:5432/databaze)
+      </li>
+      <li><em>JWT_SECRET</em> - klíč pro podepisování tokenů JWT</li>
+      <li>
+        <em>CORS_ORIGIN</em> - lze přidat povolené domény(oddělené čárkami), ke
+        kterým budou přidány CORS hlavičky (URL adresy Web aplikace)
+      </li>
+      <li><em>AWS_ACCESS_KEY_ID</em> - klíč pro přístup ke službě Amazon S3</li>
+      <li><em>AWS_SECRET_ACCESS_KEY</em> - tajný klíč ke službě Amazon S3</li>
+      <li>
+        <em>AWS_REGION</em> - region, ve kterém se nachází S3 bucket(použili
+        jsme eu-north-1)
+      </li>
+      <li>
+        <em>AWS_BUCKET_NAME</em> - jméno S3 bucketu (jméno našeho je
+        iis-image-bucket)
+      </li>
+    </ul>
+
+    <p>
+      Pro spuštění v produkci bude nutné nastavit proměnnou prostředí
+      <em>GIN_MODE</em>, aby se vypnul debug mode:
+    </p>
+
+    <em>$ export GIN_MODE=release</em>
+
+    <p>Spuštění:</p>
+
+    <em>$ cd backend && go run main.go</em>
+
+    <p>nebo:</p>
+
+    <em>$ cd backend && go build main.go && ./main</em>
+
+    <h4>Frontend</h4>
+
+    <p>
+      Před spuštěním frontendu take je nutné též vyplnit soubor <em>.env</em>,
+      ve složce <em>frontend</em> je šablona <em>.env.example</em>:
+    </p>
+
+    <em>$ cd frontend && cp .env.example .env</em>
+
+    <p>Soubor <em>.env</em> pro frontend má nasledující položky:</p>
+    <ul>
+      <li>
+        <em>VITE_API_URL</em> - adresa (URL) kde byl spuštěn backend (například
+        <em>http://localhost:8080</em>)
+      </li>
+      <li>
+        <em>VITE_BASE_URL</em> - adresa vůči které se provádí routování mezi
+        stránkami (například <em>/</em> nebo <em>/~xlogin00/IIS/</em>)
+      </li>
+    </ul>
+
+    <p>Všechny závislosti je nutné stáhnout pomocí nástroje <em>npm</em>:</p>
+
+    <em>$ npm i</em>
+
+    <p>
+      Po instalaci závislostí lze frontend zkompilovat (<em>tsc</em>) a sestavit
+      (bundle), k tomu použijeme nástroj pro sestavení <em>Vite</em> pomocí
+      příkazu:
+    </p>
+
+    <em>$ npm run build</em>
+
+    <p>
+      Po provedení tohoto příkazu bude sestavený projekt umístěn do složky
+      <em>frontend/dist/</em>, a lze použít jakýkoli nástroj pro spuštění HTTP
+      webového serveru, například <em>serve</em>:
+    </p>
+
+    <p>Instalace <em>serve</em>:</p>
+
+    <em>$ npm i serve -g</em>
+
+    <p>Spuštění HTTP webového serveru:</p>
+
+    <em>$ serve frontend/dist/</em>
+
+    <p>nebo, pokud máte nástroj npx:</p>
+
+    <em>$ npx serve frontend/dist/</em>
+
+    <h4>Připravené Docker soubory a Docker compose</h4>
+    <p>
+      Byl také vytvořen
+      <a href="https://docs.docker.com/compose/">Docker Compose</a>, který
+      spouští tři služby (Databáze, Backend, Frontend). Všechny související
+      konfigurační soubory se nacházejí ve složce <em>docker/</em>.
+    </p>
+
+    <p>
+      Před spuštěním je nutné nastavit proměnné prostředí pro Amazon S3 (<em
+        >AWS_ACCESS_KEY_ID</em
+      >
+      a <em>AWS_SECRET_ACCESS_KEY</em>).
+    </p>
+
+    <p>Spuštění:</p>
+
+    <em>$ cd docker && docker compose up</em>
+
+    <!-- Stručně popište:
+    <ul>
+      <li>postup instalace na server,</li>
+      <li>softwarové požadavky (verze PHP apod.),</li>
+      <li>jak rozbalit, konfigurovat, inicializovat databázi, ...</li>
+    </ul> -->
+    <h2>Známé problémy</h2>
+    <p>
+      Zde popište, které body zadání nejsou implementovány a z jakého důvodu.
+      Např. &bdquo;Z časových důvodů nebyla implementována správa
+      uživatelů.&rdquo; Pomůžete tím zrychlit hodnocení, když neimplementované
+      funkce nebudeme muset dlouze hledat.
+    </p>
+  </body>
+</html>
