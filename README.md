@@ -31,7 +31,7 @@ basically means that code is usable):
 | IPK         | Computer Communications and Networks       | Client for a chat server             |
 | IPP         | Principles of Programming Languages        | Custom language toolchain            |
 | ISC         | PC Seminar                                 | Palindrome finder                    |
-| ISJ         | Scripting Languages                        | Some python scripts                  |
+| ISJ         | Scripting Languages                        | Python scripts                       |
 | ISS         | Signals and Systems                        | Car engines audio processor          |
 | IZG         | Computer Graphics                          | Shaders                              |
 | IZLO        | Introduction to Logic for Computer Science | SAT and SMT solvers                  |
