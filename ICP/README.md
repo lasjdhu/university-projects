@@ -1,8 +1,9 @@
-# Aplikace typu Pac-Man
+# Pac-Man
 
-## Duben 2023
+## April 2023
 
-## Autoři
+## Authors
+
 - xkrato67
 - ![@lasjdhu](https://github.com/lasjdhu)
 
@@ -10,27 +11,30 @@
 
 ![Screenshot](assets/game.png)
 
-## Implementace
+## Implementation
 
-Výsledkem je hra vytvořená pomocí prostředí Qt v C++.
-Uživatel používá GUI k interakci s hrou.
-Implementace využívá návrhového vzoru Model View Controller, pro oddělení modelu hry a GUI.
-Hra obsahuje tři interaktivní prvky, kterými jsou:
-1) Počítání kroků hráče.
-2) Zobrazování aktuálních životů.
-3) Počet pokusů hráče na konci kola.
+The result is a game created using the Qt framework in C++. The user uses a GUI
+to interact with the game. The implementation utilizes the Model View Controller
+(MVC) design pattern to separate the game model from the GUI. The game contains
+three interactive elements:
 
-## Funkčnost
+- Counting user steps.
+- Displaying current lives.
+- Number of player attempts at the end of the round.
 
-1) Při spuštění aplikace budete vyzváni k výběru mapy. Poté je možné vybrat mapu pomocí tlačítka Game -> 'Load', v horní liště
-nebo spuštěním stejné mapy pomocí 'Restart' po skončení hry.
-2) Stav hry lze uložit pomocí tlačítka Game -> 'Save'. Poté je možné ji načíst jako běžnou mapu.
-3) Po skončení hry lze gameplay uložit pomocí tlačítka 'Save this gameplay' a poté ji znovu přehrát pomocí tlačítka Game -> 'Replay'.
+## Functionality
 
-## Omezení implementace
+- Upon launching the application, you will be prompted to select a map.
+  Subsequently, a map can be selected via the Game -> 'Load' button in the top
+  bar, or by restarting the same map using 'Restart' after the game ends.
+- The game state can be saved using the Game -> 'Save' button. It can then be
+  loaded just like a standard map.
+- After the game ends, the gameplay can be saved using the 'Save this gameplay'
+  button and then replayed via the Game -> 'Replay' button.
 
-1) Pohyby Pac-Mana se ovládají pouze pomocí WASD, šipky nefungují.
-2) Byl implementován pouze jeden mód přehrávání – postupné krokování.
+## Limitations and bugs
 
-## Známé chyby
-1) Okénko 'Save this gameplay' se objeví tolikrát, kolikrát jste klikli na 'Restart'.
+- Pac-Man's movements are controlled only via WASD; arrow keys do not work.
+- Only one replay mode was implemented - step-by-step stepping.
+- The 'Save this gameplay' window appears as many times as you have clicked
+  'Restart'.
