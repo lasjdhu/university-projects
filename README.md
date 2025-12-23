@@ -18,24 +18,24 @@ folder.
 Here is a list of the courses and their respective projects status (which
 basically means that code is usable):
 
-| Course Code | Course Name                                | What I created                      |
-| ----------- | ------------------------------------------ | ----------------------------------- |
-| IAL         | Algorithms                                 | Basic algorithms                    |
-| ICP         | The C++ Programming Language               | Pacman                              |
-| IDS         | Database Systems                           | Pharmacy DB                         |
-| IFJ         | Formal Languages and Compilers             | Zig compiler                        |
-| IMP         | Microprocessors and Embedded Systems       | Simple HW Alarm                     |
-| INC         | Digital Systems Design                     | Circuit design                      |
-| INP         | Design of Computer Systems                 | Brainf*ck compiler, Vigener encoder |
-| IOS         | Operating Systems                          | Semaphores, Crypto exchange script  |
-| IPK         | Computer Communications and Networks       | Client for a chat server            |
-| IPP         | Principles of Programming Languages        | Interpreter of custom language      |
-| ISC         | PC Seminar                                 | Palindrome finder                   |
-| ISJ         | Scripting Languages                        | Some python scripts                 |
-| ISS         | Signals and Systems                        | Car engines audio processor         |
-| IZG         | Computer Graphics                          | Shaders                             |
-| IZLO        | Introduction to Logic for Computer Science | SAT and SMT solvers                 |
-| IZP         | Introduction to Programming Systems        | Password checker                    |
+| Course Code | Course Name                                | What I created                       |
+| ----------- | ------------------------------------------ | ------------------------------------ |
+| IAL         | Algorithms                                 | Algorithms                           |
+| ICP         | The C++ Programming Language               | Pac-Man                              |
+| IDS         | Database Systems                           | Pharmacy DB                          |
+| IFJ         | Formal Languages and Compilers             | Zig compiler                         |
+| IMP         | Microprocessors and Embedded Systems       | Simple HW Alarm                      |
+| INC         | Digital Systems Design                     | Circuit design                       |
+| INP         | Design of Computer Systems                 | Brainfuck compiler, Vigenère encoder |
+| IOS         | Operating Systems                          | Semaphores, Crypto exchange script   |
+| IPK         | Computer Communications and Networks       | Client for a chat server             |
+| IPP         | Principles of Programming Languages        | Interpreter of custom language       |
+| ISC         | PC Seminar                                 | Palindrome finder                    |
+| ISJ         | Scripting Languages                        | Some python scripts                  |
+| ISS         | Signals and Systems                        | Car engines audio processor          |
+| IZG         | Computer Graphics                          | Shaders                              |
+| IZLO        | Introduction to Logic for Computer Science | SAT and SMT solvers                  |
+| IZP         | Introduction to Programming Systems        | Password checker                     |
 
 ## 📜 Regarding License(s)
 
