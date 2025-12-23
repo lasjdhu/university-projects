@@ -24,6 +24,7 @@ basically means that code is usable):
 | ICP         | The C++ Programming Language               | Pacman                              |
 | IDS         | Database Systems                           | Pharmacy DB                         |
 | IFJ         | Formal Languages and Compilers             | Zig compiler                        |
+| IMP         | Microprocessors and Embedded Systems       | Simple HW Alarm                     |
 | INC         | Digital Systems Design                     | Circuit design                      |
 | INP         | Design of Computer Systems                 | Brainf*ck compiler, Vigener encoder |
 | IOS         | Operating Systems                          | Semaphores, Crypto exchange script  |
