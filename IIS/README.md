@@ -1,4 +1,4 @@
-# Student Tournaments Information System
+# Student tournaments IS
 
 ## November 2025
 
