@@ -20,6 +20,7 @@ basically means that code is usable):
 | ICP         | The C++ Programming Language               | Pac-Man                              |
 | IDS         | Database Systems                           | Pharmacy DB                          |
 | IFJ         | Formal Languages and Compilers             | Zig compiler                         |
+| IIS         | Information Systems                        | Student tournaments IS               |
 | IMP         | Microprocessors and Embedded Systems       | Simple HW alarm                      |
 | IMS         | Modelling and Simulation                   | Queueing system model                |
 | INC         | Digital Systems Design                     | Circuit design                       |
