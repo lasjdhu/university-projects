@@ -1,8 +1,8 @@
-# `palindrom.c`
+# Palindrome finder
 
 ## October 2023
 
-### Specification
+### Description
 
 Checks if given string is a palindrom or not
 
