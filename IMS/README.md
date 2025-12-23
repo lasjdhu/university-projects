@@ -1,4 +1,4 @@
-# Queueing System Model of Agricultural Production
+# Queueing system model of agricultural production
 
 ## December 2025
 
