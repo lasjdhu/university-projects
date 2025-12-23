@@ -1,4 +1,4 @@
-# Semaphores in C
+# Semaphores
 
 ## April 2024
 

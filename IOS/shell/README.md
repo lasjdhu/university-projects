@@ -1,4 +1,4 @@
-# XTF
+# Crypto exchange script
 
 ## February 2024
 
@@ -31,18 +31,15 @@ advanced technologies (the right buzzwords will ensure an influx of additional
 capital from investors), in this particular case it actually makes more sense to
 solve the problem using a shell script rather than a trained neural network.
 
-### Name
-
-- `xtf` - a script for preprocessing logs from your cryptocurrency exchange.
-
 ### Usage
 
-- `xtf [-h|--help] [FILTER] [COMMAND] USER LOG [LOG2 [...]`
+```sh
+xtf [-h|--help] [FILTER] [COMMAND] USER LOG [LOG2 [...]
+```
 
-### Options
+Options
 
 - `COMMAND` can be one of:
-
   - `list` - a listing of records for the given user.
   - `list-currency` - listing a sorted list of occurring currencies.
   - `status` - a listing of the actual account status grouped and sorted by
@@ -51,7 +48,6 @@ solve the problem using a shell script rather than a trained neural network.
     included.
 
 - `FILTER` can be a combination of the following:
-
   - `-a DATETIME` - after: only records AFTER this date and time (without it)
     are considered. DATETIME is of format YYYY-MM-DD HH:MM:SS.
   - `-b DATETIME` - before: only records BEFORE this date and time (without it)
