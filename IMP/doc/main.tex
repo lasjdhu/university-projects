@@ -1,0 +1,134 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[czech]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[left=2cm,text={17cm, 24cm},top=3cm]{geometry}
+\usepackage{hyperref}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{\fill}
+
+    {\LARGE Dokumentace k projektu IMP \par}
+    \vspace{0.5cm}
+    {\Huge \textbf{Jednoduchý alarm} \par}
+    \vspace{1cm}
+    {\Large Dmitrii Ivanushkin (xivanu00) \par}
+    {\Large \today \par}
+
+    \vspace*{\fill}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\section{Úvod}
+Cílem tohoto projektu bylo navrhnout a realizovat jednoduchý vestavný alarm s využitím mikrokontroléru FITkit3 a sady externích senzorů a akčních členů. 
+
+\subsection{Motivace a cíle}
+Motivací projektu je vyzkoušení práce s perifériemi mikrokontroléru, konkrétně s GPIO, časovači a komunikačními rozhraními SPI. Výsledné zařízení musí umět simulovat reálnou bezpečnostní ústřednu, která umožňuje:
+\begin{itemize}
+    \item Detekci narušení pomocí více typů senzorů: PIR, Reed modul, Tilt senzor.
+    \item Autentizaci uživatele pomocí zadání hesla z klávesnice nebo pípnutím RFID karty.
+    \item Signalizaci stavu systému pomocí LED semaforu a piezo bzučáku.
+    \item Volbu režimů střežení kombinací různých senzorů.
+\end{itemize}
+
+\newpage
+
+\section{Rozbor a návrh řešení}
+
+\subsection{Příprava projektu a nástroje}
+Práce na projektu byla zahájena stažením a instalací vývojového prostředí Kinetis Design Studio. Tento krok zajistil přístup k potřebnému toolchainu, hlavičkovým souborům a základní konfiguraci mikrokontroléru. V IDE byl vytvořen nový projekt, což vygenerovalo počáteční souborovou strukturu. Následná kompilace, nahrávání programu a ladění však byly realizovány pomocí nástrojů příkazové řádky pro flexibilnější práci s hardwarem. Pro nahrání přeloženého binárního souboru do paměti mikrokontroléru a následný běh byl využit GDB server \texttt{pegdbserver\_console} ve spojení s debuggerem \texttt{arm-none-eabi-gdb}.
+
+\subsection{Hardware}
+Jako vestavná platforma byl zvolen výukový kit FITkit 3 s mikrokontrolérem NXP typu MK60D10. K tomuto kitu byly připojeny následující periferie:
+
+\begin{enumerate}
+    \item \textbf{Vstupy:}
+    \begin{itemize}
+        \item Membránová klávesnice 4x4.
+        \item RFID čtečka RC-522.
+        \item PIR senzor pohybu.
+        \item Reed modul pro simulaci otevření dveří.
+        \item Tilt senzor pro detekci fyzické manipulace s objektem.
+    \end{itemize}
+    \item \textbf{Výstupy:}
+    \begin{itemize}
+        \item LED semafor.
+        \item Piezo bzučák.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Stavový automat}
+Chování systému je řízeno stavovým automatem, který nabývá čtyř hlavních stavů:
+\begin{enumerate}
+    \item \textbf{STATE\_IDLE (Vypnuto):} Systém je neaktivní, svítí zelená LED. Čeká na zadání aktivačního kódu nebo přiložení karty.
+    \item \textbf{STATE\_EXIT\_DELAY (Odchodové zpoždění):} Po zadání správného kódu systém odpočítává čas pro opuštění prostoru kdy bliká žlutá LED.
+    \item \textbf{STATE\_ARMED (Střeženo):} Systém je aktivní, svítí žlutá LED. Monitoruje vybrané senzory dle zvoleného režimu.
+    \item \textbf{STATE\_ALARM (Poplach):} Došlo k narušení. Svítí červená LED a zní siréna. Deaktivace je možná znovu zadáním kódu nebo kartou.
+\end{enumerate}
+
+\newpage
+
+\section{Vlastní řešení}
+
+Implementace byla provedena v jazyce C s přímým přístupem k registrům mikrokontroléru.
+
+\subsection{Inicializace a konfigurace}
+V rámci funkce \texttt{MCUInit} a \texttt{PortsInit} dochází k vypnutí Watchdog timeru a povolení hodinového signálu. Jednotlivé piny jsou nastaveny jako GPIO pomocí \texttt{PORT\_PCR\_MUX(0x01)}. Pro některé vstupy, které to vyžadovaly jako senzory a sloupce klávesnice, jsou aktivovány přidány masky \texttt{PORT\_PCR\_PE\_MASK} a \texttt{PORT\_PCR\_PS\_MASK}.
+
+\subsection{Obsluha klávesnice}
+Klávesnice je obsluhována skenováním pomocí funkce \texttt{Keypad\_Scan\_Raw}, která postupně nastaví log. 0 nebo 1 v závislosti na zapojení a čte stavy sloupců. Byl implementován jednoduchý debouncing pomocí zpoždění \texttt{delay()}.
+
+\subsection{Komunikace s RFID}
+Funkce \texttt{SPI\_Transfer} ručně ovládá piny SCK, MOSI a čte MISO v cyklu pro přenos 8 bitů, jelikož pro připojení RFID modulu RC-522 nebyly využity hardwarové piny SPI
+
+\subsection{Logika alarmu a režimy}
+Systém podporuje 4 režimy střežení, které se volí při zadávání aktivačního kódu ve formátu \texttt{*<MÓD>1234}, kde MÓD je A, B, C nebo D:
+\begin{itemize}
+    \item \textbf{Mód A:} Aktivní pouze PIR senzor.
+    \item \textbf{Mód B:} Aktivní pouze Reed modul.
+    \item \textbf{Mód C:} Aktivní pouze Tilt senzor.
+    \item \textbf{Mód D:} Aktivní všechny senzory.
+\end{itemize}
+
+V hlavní nekonečné smyčce \texttt{while(1)} se na základě proměnné \texttt{currentState} provádí přiřazená logika. Přechody mezi stavy jsou signalizovaný akustickou signalizací (funkce \texttt{beep\_short}, \texttt{beep\_long}) a změnou vybrané barvy na LED semaforu.
+
+\newpage
+
+\section{Závěrečné zhodnocení}
+
+\subsection{Shrnutí vlastností řešení}
+Vytvořené zařízení splňuje všechny povinné požadavky zadání. Podařilo se úspěšně implementovat čtení stavů ze tří různých senzorů, ovládání pomocí maticové klávesnice s podporou hesel, integraci RFID čtečky a stavový automat s vizuální i akustickou zpětnou vazbou.
+
+\subsection{Realizované nepovinné činnosti}
+Nad rámec povinného zadání byla implementována podpora pro různé režimy alarmu. Uživatel má možnost při aktivaci alarmu zvolit jeden ze čtyř režimů (A, B, C, D), čímž definuje, které senzory budou aktivní.
+
+\subsection{Autoevaluace}
+Nejobtížnější částí projektu byla implementace softwarového SPI pro RFID čtečku a správné časování komunikace. Většina času byla věnována ladění komunikace s periferiemi a ošetření zákmitů tlačítek. Výsledný kód je funkční, což bylo prokázáno při prezentaci projektu. Výsledný předpoklad hodnocení je:
+\begin{itemize}
+    \item \textbf{Funkčnost řešení:} 5/5 b.
+    \item \textbf{Přístup k řešení:} 2/2 b.
+    \item \textbf{Kvalita řešení:} 2/2 b.
+    \item \textbf{Prezentace:} 2/2 b.
+    \item \textbf{Dokumentace k řešení:} 3/3 b.
+\end{itemize}
+$$\sum = 5 + 2 + 2 + 2 + 3 = 14$$
+
+\subsection{Celkové zhodnocení}
+Zadání projektu považuji za adekvátně náročné a přínosné pro pochopení práce s registry mikrokontroléru. Cíl projekt byl splněn v plném rozsahu včetně volitelného rozšíření.
+
+\newpage
+
+\section{Použité zdroje}
+\begin{enumerate}
+    \item Ing. JOSEF STRNADEL Ph.D. \textit{FITkit3 Dev Quickstart}. Příručka. \url{https://git.fit.vut.cz/strnadel/edu/src/branch/main/howto-hints/embedded/FITkit3_dev_quickstart_cz.md}
+    \item  doc. Ing. MICHAL BIDLO Ph.D. \textit{FITkit-3Demo.pdf}. Prezentace k předmětu IMP. \url{https://moodle.vut.cz/mod/folder/view.php?id=557739}
+    \item NXP SEMICONDUCTORS. \textit{Kinetis Quick Reference User Guide}. Příručka. \url{https://moodle.vut.cz/mod/folder/view.php?id=557739}
+    \item ARDUINO INTRO. \textit{ How to Use RFID RC522 with Arduino: A Complete Beginner's Guide}. Vzorová dokumentace k modulu RFID RC-522. \url{https://www.arduinointro.com/articles/projects/how-to-use-rfid-rc522-with-arduino-a-complete-beginners-guide}
+\end{enumerate}
+
+\end{document}
