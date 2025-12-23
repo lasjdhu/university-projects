@@ -1,4 +1,4 @@
-# Filtering DNS Resolver
+# Filtering DNS resolver
 
 ## November 2025
 
