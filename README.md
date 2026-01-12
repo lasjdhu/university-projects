@@ -32,6 +32,7 @@ basically means that code is usable):
 | ISC         | PC Seminar                                 | Palindrome finder                    |
 | ISJ         | Scripting Languages                        | Python scripts                       |
 | ISS         | Signals and Systems                        | Car engines audio processor          |
+| ITU         | User Interface Programming                 | IoT Manager                          |
 | IZG         | Computer Graphics                          | Shaders                              |
 | IZLO        | Introduction to Logic for Computer Science | SAT and SMT solvers                  |
 | IZP         | Introduction to Programming Systems        | Password checker                     |
